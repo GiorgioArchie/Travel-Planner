@@ -11,10 +11,10 @@ Link to the deployed application
 ## 1. Team Number​ - 4
 ## 2. Team name​ - Team Travel
 ## 3. Team Members​ - 
-Alexander Long(allo2301, allo2301@colorado.edu), 
-Laura Zang(LauraZang, yuts2562@colorado.edu), 
-Giorgio Schepis (GiorgioArchie, gisc2747@colorado.edu), 
-Jack Slater(JackSlater, jasl5588@colorado.edu)
+- **Alexander Long(allo2301, allo2301@colorado.edu), 
+- **Laura Zang(LauraZang, yuts2562@colorado.edu), 
+- **Giorgio Schepis (GiorgioArchie, gisc2747@colorado.edu), 
+- **Jack Slater(JackSlater, jasl5588@colorado.edu)
 ## 4. Application Name​ - Travel Planner
 ## 5. Application Description​ - 
 The Travel Planner & Journal website helps travelers organize their trips and keep track of their experiences. Users can create detailed plans by adding destinations, activities, and schedules, making it easy to stay on top of their itinerary. The web app also allows travelers to save important details like hotel bookings, transportation, and places they want to visit, all in one place. For group trips, users can share their plans with friends, making coordination simpler. Whether planning a weekend getaway or a long vacation, this app helps travelers stay organized and make the most of their journey.
@@ -39,14 +39,14 @@ Since this project is scheduled for 4 weeks, we encourage you to use an Agile Me
 ## 10. Communication Plan​ - 
 We are planning to communicate through a text group.
 ## 11. Meeting Plan​
-Team Meeting: 
-Time: Tuesday 8-10 AM
-Modality: In person
-Location: csel
-Weekly meeting with TA: 
-Time: Tuesday 10-10:30 AM
-Modality: In person/zoom
-Location: csel
+- **Team Meeting: 
+- **Time: Tuesday 8-10 AM
+- **Modality: In person
+- **Location: csel
+- **Weekly meeting with TA: 
+- **Time: Tuesday 10-10:30 AM
+- **Modality: In person/zoom
+- **Location: csel
 ## 12. Use Case Diagram​
 Create a high-level Use Case Diagram for your application. Your diagram must show at least 6 key features of your application.
 This activity should help you identify the end users of the application and the ways they would interact with the system. You can reference the examples covered in class. This will also help you scope out the features of your application. You can refer to this page for more information on how to create a Use Case Diagram.
