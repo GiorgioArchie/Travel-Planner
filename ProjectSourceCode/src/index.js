@@ -21,18 +21,25 @@ app.set('views', path.join(__dirname, 'views'));
 // (Optional) Serve static files (CSS, images, JS) from a 'public' folder
 app.use(express.static(path.join(__dirname, 'public')));
 
+app.get('/register', (req, res) => {
+  res.render('pages/register');
+});
+app.get('/', (req, res) => {
+  res.redirect('/login');
+});
+
+
 
 // Route for login page
 app.get('/login', (req, res) => {
-  // Renders 'login.hbs' from the views folder
-  res.render('login');
+  res.render('pages/login');
 });
 
 
 // Route for events page
 app.get('/events', (req, res) => {
   // Renders 'events.hbs' from the views folder
-  res.render('events');
+  res.render('pages/events');
 });
 
 
