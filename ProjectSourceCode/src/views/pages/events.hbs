@@ -1,0 +1,199 @@
+{{!-- events.hbs --}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Travel Planner & Journal - Events</title>
+  <!-- Bootstrap CSS (example version; adjust as needed) -->
+  <link
+    rel="stylesheet"
+    href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+  />
+  <!-- Your custom CSS -->
+  <link rel="stylesheet" href="/css/styles.css" />
+</head>
+<body>
+  <div class="overlay">
+    <div class="container">
+      <h1 class="text-center mb-4">Travel Planner & Journal</h1>
+      <p class="text-center">
+        Organize destinations, activities, and schedules. Document your journey and create lasting memories!
+      </p>
+
+
+      <div class="row justify-content-center">
+        <div class="col-md-8">
+          <div class="card mb-4">
+            <div class="card-header text-center">
+              <strong>Add New Event</strong>
+            </div>
+            <div class="card-body">
+              <form id="eventForm">
+                <div class="form-row">
+                  <div class="form-group col-md-6">
+                    <label for="destination">Destination</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="destination"
+                      placeholder="e.g., Paris, France"
+                      required
+                    />
+                  </div>
+                  <div class="form-group col-md-6">
+                    <label for="activity">Activity</label>
+                    <input
+                      type="text"
+                      class="form-control"
+                      id="activity"
+                      placeholder="e.g., Visit the Louvre"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="form-row">
+                  <div class="form-group col-md-6">
+                    <label for="date">Date</label>
+                    <input
+                      type="date"
+                      class="form-control"
+                      id="date"
+                      required
+                    />
+                  </div>
+                  <div class="form-group col-md-6">
+                    <label for="time">Time</label>
+                    <input
+                      type="time"
+                      class="form-control"
+                      id="time"
+                      required
+                    />
+                  </div>
+                </div>
+                <div class="form-group">
+                  <label for="notes">Notes / Journal Entry</label>
+                  <textarea
+                    class="form-control"
+                    id="notes"
+                    rows="3"
+                    placeholder="Additional details, personal thoughts, etc."
+                  ></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary btn-block">
+                  Add Event
+                </button>
+              </form>
+            </div>
+          </div>
+
+
+          <div class="card">
+            <div class="card-header text-center">
+              <strong>My Trip Events</strong>
+            </div>
+            <div class="card-body p-0">
+              <table class="table table-striped mb-0">
+                <thead>
+                  <tr>
+                    <th scope="col">Destination</th>
+                    <th scope="col">Activity</th>
+                    <th scope="col">Date</th>
+                    <th scope="col">Time</th>
+                    <th scope="col">Notes</th>
+                    <th scope="col">Remove</th>
+                  </tr>
+                </thead>
+                <tbody id="eventTableBody">
+                  <!-- Events will be dynamically added here by JS -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Include JS libraries (Bootstrap, etc.) -->
+  <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"
+  ></script>
+
+
+  <!-- Your custom JS (e.g., /js/events.js) -->
+  <script>
+    // Example client-side script for adding/removing events
+    const eventForm = document.getElementById('eventForm');
+    const eventTableBody = document.getElementById('eventTableBody');
+
+
+    eventForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+
+
+      const destinationInput = document.getElementById('destination');
+      const activityInput = document.getElementById('activity');
+      const dateInput = document.getElementById('date');
+      const timeInput = document.getElementById('time');
+      const notesInput = document.getElementById('notes');
+
+
+      const row = document.createElement('tr');
+
+
+      // Create cells
+      const destinationCell = document.createElement('td');
+      destinationCell.textContent = destinationInput.value;
+      row.appendChild(destinationCell);
+
+
+      const activityCell = document.createElement('td');
+      activityCell.textContent = activityInput.value;
+      row.appendChild(activityCell);
+
+
+      const dateCell = document.createElement('td');
+      dateCell.textContent = dateInput.value;
+      row.appendChild(dateCell);
+
+
+      const timeCell = document.createElement('td');
+      timeCell.textContent = timeInput.value;
+      row.appendChild(timeCell);
+
+
+      const notesCell = document.createElement('td');
+      notesCell.textContent = notesInput.value;
+      row.appendChild(notesCell);
+
+
+      // Remove button
+      const removeCell = document.createElement('td');
+      const removeBtn = document.createElement('button');
+      removeBtn.classList.add('btn', 'btn-danger', 'btn-sm');
+      removeBtn.textContent = 'Remove';
+      removeBtn.addEventListener('click', () => row.remove());
+      removeCell.appendChild(removeBtn);
+      row.appendChild(removeCell);
+
+
+      // Append row
+      eventTableBody.appendChild(row);
+
+
+      // Reset
+      destinationInput.value = '';
+      activityInput.value = '';
+      dateInput.value = '';
+      timeInput.value = '';
+      notesInput.value = '';
+    });
+  </script>
+</body>
+</html>
+
+
+
