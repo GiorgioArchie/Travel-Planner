@@ -11,7 +11,7 @@ DROP TABLE IF EXISTS users CASCADE;
 
 -- Create users table (this must work for registration)
 CREATE TABLE users (
-  username VARCHAR(50) PRIMARY KEY,
+  username VARCHAR(50) PRIMARY KEY NOT NULL,
   password VARCHAR(100) NOT NULL
 );
 
@@ -22,7 +22,13 @@ CREATE TABLE trips (
   date_end DATE,
   city VARCHAR(50),
   country VARCHAR(50)
-);
+)
+
+CREATE TABLE IF NOT EXISTS trips_to_events_journals (
+  trip_id PRIMARY KEY NOT NULL,
+  event_id INT,
+  journal_id INT
+)
 
 CREATE TABLE events (
   event_id SERIAL PRIMARY KEY,
@@ -31,30 +37,17 @@ CREATE TABLE events (
   activity VARCHAR(100),
   hotel_booking VARCHAR(100),
   plane_tickets VARCHAR(100)
-);
+)
 
-CREATE TABLE uses_to_trips (
-  id SERIAL PRIMARY KEY,
-  username VARCHAR(50) REFERENCES users(username),
-  trip_id INT REFERENCES trips(trip_id)
-);
-
-CREATE TABLE trips_to_events (
-  id SERIAL PRIMARY KEY,
-  trip_id INT REFERENCES trips(trip_id),
-  event_id INT REFERENCES events(event_id)
-);
-
-CREATE TABLE journals (
-  journal_id SERIAL PRIMARY KEY,
-  username VARCHAR(50) REFERENCES users(username),
+DROP TABLE IF EXISTS journals CASCADE;
+CREATE TABLE IF NOT EXISTS journals (
+  journal_id PRIMARY KEY,
   comments VARCHAR(500)
 );
 
-CREATE TABLE events_to_journals (
-  id SERIAL PRIMARY KEY,
-  event_id INT REFERENCES events(event_id),
-  journal_id INT REFERENCES journals(journal_id)
+CREATE TABLE journal_to_image (
+  journal_id INT REFERENCES journals(journal_id),
+  image_id INT REFERENCES images(image_id)
 );
 
 CREATE TABLE images (
@@ -63,8 +56,3 @@ CREATE TABLE images (
   image_caption VARCHAR(200)
 );
 
-CREATE TABLE journal_to_image (
-  id SERIAL PRIMARY KEY,
-  journal_id INT REFERENCES journals(journal_id),
-  image_id INT REFERENCES images(image_id)
-);
