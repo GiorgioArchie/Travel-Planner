@@ -15,15 +15,15 @@
        <ul class="navbar-nav me-auto">
          <li class="nav-item">
            <!--For the calendar page-->
-           <a href="{{#if LoggedIn}}/calendar {{else}}/login">Calendar</a>
+           <a href="{{#if LoggedIn}}/calendar{{else}}/login{{/if}}">Calendar</a>
          </li>
          <li class="nav-item">
            <!--For the list of all trips page-->
-           <a href="{{#if LoggedIn}}/trips {{else}}/login">All Trips</a>
+           <a href="{{#if LoggedIn}}/trips{{else}}/login{{/if}}">All Trips</a>
          </li>
          <li class="nav-item">
            <!--For the journal about trips page (update page) page-->
-           <a href="{{#if LoggedIn}}/journal {{else}}/login">Journal</a>
+           <a href="{{#if LoggedIn}}/journal{{else}}/login{{/if}}">Journal</a>
          </li>
        </ul>
        <div class="nav-item me-1">

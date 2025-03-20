@@ -1,55 +1,70 @@
-DROP TABLE IF EXISTS users;
+-- Drop tables in reverse order of dependencies
+DROP TABLE IF EXISTS journal_to_image CASCADE;
+DROP TABLE IF EXISTS images CASCADE;
+DROP TABLE IF EXISTS events_to_journals CASCADE;
+DROP TABLE IF EXISTS journals CASCADE;
+DROP TABLE IF EXISTS trips_to_events CASCADE;
+DROP TABLE IF EXISTS events CASCADE;
+DROP TABLE IF EXISTS uses_to_trips CASCADE;
+DROP TABLE IF EXISTS trips CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+
+-- Create users table (this must work for registration)
 CREATE TABLE users (
-  username VARCHAR(50) PRIMARY KEY NOT NULL,
-  password VARCHAR(60) NOT NULL
+  username VARCHAR(50) PRIMARY KEY,
+  password VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS uses_to_trips (
-  username VARCHAR(50) PRIMARY KEY NOT NULL,
-  trip_id INT
-)
-
-CREATE TABLE IF NOT EXISTS trips (
-  trip_id INT PRIMARY KEY NOT NULL,
-  date_start date,
-  date_end date,
+-- Create other tables
+CREATE TABLE trips (
+  trip_id SERIAL PRIMARY KEY,
+  date_start DATE,
+  date_end DATE,
   city VARCHAR(50),
   country VARCHAR(50)
-)
+);
 
-CREATE TABLE IF NOT EXISTS trips_to_events (
-  trip_id PRIMARY KEY NOT NULL,
-  event_id INT
-)
-
-CREATE TABLE IF NOT EXISTS events (
-  event_id INT PRIMARY KEY NOT NULL,
-  start_time time,
-  end_time time,
+CREATE TABLE events (
+  event_id SERIAL PRIMARY KEY,
+  start_time TIME,
+  end_time TIME,
   activity VARCHAR(100),
   hotel_booking VARCHAR(100),
   plane_tickets VARCHAR(100)
-)
+);
 
-CREATE TABLE IF NOT EXISTS events_to_journals (
-  events_id 
-)
+CREATE TABLE uses_to_trips (
+  id SERIAL PRIMARY KEY,
+  username VARCHAR(50) REFERENCES users(username),
+  trip_id INT REFERENCES trips(trip_id)
+);
 
-DROP TABLE IF EXISTS journals CASCADE;
-CREATE TABLE IF NOT EXISTS journals (
-  username VARCHAR(50) SERIAL PRIMARY KEY NOT NULL,
-  journal_id INT,
+CREATE TABLE trips_to_events (
+  id SERIAL PRIMARY KEY,
+  trip_id INT REFERENCES trips(trip_id),
+  event_id INT REFERENCES events(event_id)
+);
+
+CREATE TABLE journals (
+  journal_id SERIAL PRIMARY KEY,
+  username VARCHAR(50) REFERENCES users(username),
   comments VARCHAR(500)
 );
 
-CREATE TABLE IF NOT EXISTS journal_to_image (
-  journal_id PRIMARY KEY,
-  image_id INT
+CREATE TABLE events_to_journals (
+  id SERIAL PRIMARY KEY,
+  event_id INT REFERENCES events(event_id),
+  journal_id INT REFERENCES journals(journal_id)
 );
 
-CREATE TABLE IF NOT EXISTS images (
-  image_id PRIMARY KEY,
-  image_url URL,
+CREATE TABLE images (
+  image_id SERIAL PRIMARY KEY,
+  image_url VARCHAR(255),
   image_caption VARCHAR(200)
-)
+);
 
+CREATE TABLE journal_to_image (
+  id SERIAL PRIMARY KEY,
+  journal_id INT REFERENCES journals(journal_id),
+  image_id INT REFERENCES images(image_id)
+);

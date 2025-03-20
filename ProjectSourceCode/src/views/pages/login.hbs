@@ -20,6 +20,8 @@
         Organize your trips and document your adventures all in one place.
       </p>
 
+      {{!-- Display message at the top level if present --}}
+      {{> message}}
 
       <!-- Login Card -->
       <div class="row justify-content-center">
@@ -29,13 +31,14 @@
               <strong>Login</strong>
             </div>
             <div class="card-body">
-              <form id="loginForm">
+              <form id="loginForm" action="/login" method="POST">
                 <div class="form-group">
                   <label for="username">Username</label>
                   <input
                     type="text"
                     class="form-control"
                     id="username"
+                    name="username"
                     placeholder="Enter username"
                     required
                   />
@@ -46,10 +49,10 @@
                     type="password"
                     class="form-control"
                     id="password"
+                    name="password"
                     placeholder="Enter password"
                     required
                   />
-                  {{>message}}
                 </div>
                 <button type="submit" class="btn btn-primary btn-block">
                   Login
@@ -61,23 +64,21 @@
             </div>
           </div>
 
-
           <!-- After Login Card (initially hidden) -->
           <div class="card mb-4 d-none" id="afterLoginCard">
             <div class="card-header text-center">
               <strong>Welcome!</strong>
             </div>
             <div class="card-body text-center">
-              <p>You’re now logged in. Ready to plan your trip?</p>
+              <p>You're now logged in. Ready to plan your trip?</p>
               <!-- Button to go to Add Events page -->
-              <a href="add_events.html" class="btn btn-success">Add Events</a>
+              <a href="/events" class="btn btn-success">Add Events</a>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
-
 
   <!-- Example JavaScript references -->
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
@@ -87,6 +88,3 @@
   <script src="/js/app.js"></script>
 </body>
 </html>
-
-
-
