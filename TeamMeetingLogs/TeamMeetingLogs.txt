@@ -1,0 +1,23 @@
+Interal Team Meeting:
+Goals accomplished:
+-Arielle: register.hbs, nav.hbs, create.sql, overall file structure
+-Alexander: login.hbs, events.hbs
+-Giorgio: wireframes
+-Jack: case diagram, Google maps API key
+-Laura: deliverables, readme
+
+To do:
+-Arielle: 
+-Alexander: 
+-Giorgio: calendar
+-Jack: 
+-Laura: 
+
+
+
+TA Meeting:
+Decisions made: trip data entity, event entity (day, time, duration, comments), main focus on interactive map, 
+
+Alternative actions/options discussed: Calendar open source
+
+Follow-up items, including agreed-on roles and responsibilities: create object graph of different entity types, create trip, event and calendar pages, update wireframe
