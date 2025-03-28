@@ -12,7 +12,13 @@ services:
       - ./src/init_data:/docker-entrypoint-initdb.d
   web:
     image: node:lts
+<<<<<<< HEAD:ProjectSourceCode/docker-compose.yaml
     working_dir: /repository
+=======
+    #user: 'node'
+    working_dir: /Travel-Planner
+    env_file: .env
+>>>>>>> e79027c (started to add calendar.hbs):docker-compose.yaml
     environment:
       - NODE_ENV=development
       - POSTGRES_USER=${POSTGRES_USER}
@@ -23,7 +29,7 @@ services:
     ports:
       - '3000:3000'
     volumes:
-      - ./:/repository
+      - ./:/Travel-Planner
     command: 'npm start'
 volumes:
   postgres-data:

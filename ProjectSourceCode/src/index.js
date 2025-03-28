@@ -8,6 +8,7 @@ const session = require('express-session'); // To set the session object. To sto
 const bcrypt = require('bcryptjs'); //  To hash passwords
 const axios = require('axios'); // To make HTTP requests from our server. We'll learn more about it in Part C.
 const fileUpload = require('express-fileupload');
+const { google } = require('googleapis'); //inlude google's API
 
 // Set up handlebars
 const hbs = handlebars.create({
@@ -47,6 +48,22 @@ app.set('view engine', 'hbs');
 
 // Set the 'views' directory
 app.set('views', path.join(__dirname, 'views'));
+
+// OAuth2 Client configuration
+const CLIENT_ID = 'YOUR_CLIENT_ID';
+const CLIENT_SECRET = 'YOUR_CLIENT_SECRET';
+const REDIRECT_URI = 'YOUR_REDIRECT_URI';
+const oauth2Client = new google.auth.OAuth2(
+  CLIENT_ID,
+  CLIENT_SECRET,
+  REDIRECT_URI
+);
+
+// Assume you have stored tokens from a previous authentication
+oauth2Client.setCredentials({
+  access_token: 'ACCESS_TOKEN',
+  refresh_token: 'REFRESH_TOKEN'
+});
 
 // Serve static files from resources directory
 app.use('/css', express.static(path.join(__dirname, 'resources/css')));
@@ -156,6 +173,33 @@ app.post('/login', async (req, res) => {
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.redirect('/login?message=Invalid username or password');
     }
+
+app.get('/calendar', async (req, res) => {
+  const calendar = google.calendar({version: 'v3', auth: oauth2Client});
+  try {
+    const response = await calendar.events.list({
+      calendarId: 'primary', // or a specific calendar ID
+      timeMin: (new Date()).toISOString(),
+      maxResults: 10,
+      singleEvents: true,
+      orderBy: 'startTime'
+    });
+    
+    // Format events for the template
+    const events = response.data.items.map(event => ({
+      summary: event.summary || 'No Title',
+      start: event.start.dateTime || event.start.date,
+      end: event.end.dateTime || event.end.date
+    }));
+    
+    // Render the Handlebars template and pass the events data
+    res.render('calendar', { events });
+  } catch (error) {
+    console.error('Error fetching events:', error);
+    res.status(500).send('Error fetching events');
+  }
+});
+
     
     // Set up session
     req.session.user = {
