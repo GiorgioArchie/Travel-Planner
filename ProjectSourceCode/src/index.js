@@ -197,10 +197,19 @@ app.get('/events', isAuthenticated, (req, res) => {
 
 // Route for map page
 app.get('/map', isAuthenticated, (req, res) => {
-  res.render('pages/home', { 
+  // Get the Google Maps API key from environment variables
+  const mapApiKey = process.env.GOOGLE_MAPS_API_KEY || '';
+  
+  // If the API key is missing, log a warning
+  if (!mapApiKey) {
+    console.warn('WARNING: Google Maps API key is missing from environment variables');
+  }
+  
+  res.render('pages/map', { 
     LoggedIn: true,
     username: req.session.user.username,
-    title: 'Map'
+    title: 'Interactive Map',
+    mapApiKey: mapApiKey  // Pass the API key to the template
   });
 });
 
