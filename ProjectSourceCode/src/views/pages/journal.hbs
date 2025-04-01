@@ -1,0 +1,47 @@
+{{> message }}
+
+<main class="container mt-4 mb-5">
+
+  <!-- Trip Names at the Top -->
+  <div class="mb-4">
+    <h2 class="mb-3">Trips</h2>
+    <div class="d-flex flex-wrap gap-2">
+      {{#each trips}}
+        <span class="badge bg-primary">{{this.name}}</span>
+      {{/each}}
+    </div>
+  </div>
+
+  <!-- Journal Form -->
+  <form action="/journal/submit" method="POST" enctype="multipart/form-data">
+    
+    <!-- Select Trip -->
+    <div class="mb-3">
+      <label for="trip-select" class="form-label">Select Trip</label>
+      <select name="tripId" id="trip-select" class="form-select" required>
+        <option value="" disabled selected>Select a trip</option>
+        {{#each trips}}
+            <option value="{{this.id}}">
+                {{this.city}}, {{this.country}} ({{this.date_start}} to {{this.date_end}})
+            </option>
+        {{/each}}
+      </select>
+    </div>
+
+    <!-- Description -->
+    <div class="mb-3">
+      <label for="description" class="form-label">Journal Entry</label>
+      <textarea name="description" id="description" rows="6" class="form-control" placeholder="Write about your experience..."></textarea>
+    </div>
+
+    <!-- Upload Photo -->
+    <div class="mb-3">
+      <label for="photo" class="form-label">Upload Photo</label>
+      <input type="file" name="photo" id="photo" class="form-control" accept="image/*">
+    </div>
+
+    <!-- Submit Button -->
+    <button type="submit" class="btn btn-success">Save</button>
+  </form>
+
+</main>

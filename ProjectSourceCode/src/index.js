@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const session = require('express-session'); // To set the session object. To store or access session data, use the `req.session`, which is (generally) serialized as JSON by the store.
 const bcrypt = require('bcryptjs'); //  To hash passwords
 const axios = require('axios'); // To make HTTP requests from our server. We'll learn more about it in Part C.
+const fileUpload = require('express-fileupload');
 
 // Set up handlebars
 const hbs = handlebars.create({
@@ -212,6 +213,87 @@ app.get('/map', isAuthenticated, (req, res) => {
     mapApiKey: mapApiKey  // Pass the API key to the template
   });
 });
+
+// Route for journal page
+app.get('/journal', isAuthenticated, async (req, res) => {
+  try {
+    const username = req.session.user.username;
+    console.log(`[GET /journal] User: ${username}`);
+    const trips = await db.any(
+      `SELECT 
+         trips.trip_id AS id,
+         trips.city,
+         trips.country,
+         trips.date_start,
+         trips.date_end
+       FROM trips
+       JOIN uses_to_trips ON trips.trip_id = uses_to_trips.trip_id
+       WHERE uses_to_trips.username = '${username}';`,
+    );    
+    console.log(`[GET /journal] trips:`, trips);
+
+    res.render('pages/journal', {
+      trips,
+      username,
+      LoggedIn: true,
+      title: 'Journal'
+    });
+  } catch (err) {
+    console.error('Error loading journal page:', err);
+    res.redirect('/login?message=Error loading journal page');
+  }
+});
+
+app.use(fileUpload());
+
+app.post('/journal/submit', isAuthenticated, async (req, res) => {
+  try {
+    const username = req.session.user.username;
+    const { tripId, description } = req.body;
+
+    if (!tripId || !description) {
+      return res.redirect('/journal?message=Please fill out all fields.');
+    }
+
+    // Insert journal
+    const journalResult = await db.one(
+      `INSERT INTO journals (username, comments) VALUES ('${username}', '${description}') RETURNING journal_id;`
+    );
+
+    const journalId = journalResult.journal_id;
+    console.log(`[POST /journal/submit] ID: ${journalId}`);
+
+    // Handle image upload (optional)
+    if (req.files && req.files.photo) {
+      const photo = req.files.photo;
+      const uploadPath = path.join(__dirname, 'resources/img/uploads', photo.name);
+      console.log(`[POST /journal/submit] Photo upload:`, photo.name);
+
+      await photo.mv(uploadPath); // move to local folder
+      console.log(`[POST /journal/submit] Photo saved to: ${uploadPath}`);
+
+      // Save image info
+      const imageResult = await db.one(
+        `INSERT INTO images (image_url, image_caption) VALUES ($1, $2) RETURNING image_id`,
+        [`/img/uploads/${photo.name}`, photo.name]
+      );
+
+      const imageId = imageResult.image_id;
+      console.log(`[POST /journal/submit] ImageID: ${imageId}`);
+
+      // Link journal and image
+      await db.none(
+        `INSERT INTO journal_to_image (journal_id, image_id) VALUES ('${journalId}', '${imageId}');`
+      );
+    }
+
+    res.redirect('/journal?message=Journal entry saved successfully!');
+  } catch (err) {
+    console.error('Error submitting journal:', err);
+    res.redirect('/journal?message=Error saving journal entry. Please try again.');
+  }
+});
+
 
 // Start the server
 const PORT = process.env.PORT || 3000;
