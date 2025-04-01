@@ -9,16 +9,12 @@ services:
       - '5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
-      - ./src/init_data:/docker-entrypoint-initdb.d
+      - ./ProjectSourceCode/src/init_data:/docker-entrypoint-initdb.d  #had to update path, to get into the createsql to create the tables
   web:
     image: node:lts
-<<<<<<< HEAD:ProjectSourceCode/docker-compose.yaml
-    working_dir: /repository
-=======
     #user: 'node'
-    working_dir: /Travel-Planner
+    working_dir: /Travel-Planner #updated from just /repository
     env_file: .env
->>>>>>> e79027c (started to add calendar.hbs):docker-compose.yaml
     environment:
       - NODE_ENV=development
       - POSTGRES_USER=${POSTGRES_USER}
