@@ -202,6 +202,20 @@ app.get('/events', isAuthenticated, (req, res) => {
   });
 });
 
+app.get('/journal', isAuthenticated, (req, res) => {
+  res.render('pages/journal', { 
+    LoggedIn: true,
+    username: req.session.user.username,
+    title: 'Journal'
+  });
+});
+app.get('/trips', isAuthenticated, (req, res) => {
+  res.render('pages/trips', { 
+    LoggedIn: true,
+    username: req.session.user.username,
+    title: 'Trips'
+  });
+});
 // Map route with API key
 app.get('/map', isAuthenticated, (req, res) => {
   // Get API key from environment variables
