@@ -60,10 +60,23 @@
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
   
+  <!-- Error handler for Google Maps -->
+  <script>
+    function gm_authFailure() {
+      document.getElementById('map').innerHTML = '<div class="alert alert-danger p-5 text-center"><h4>Google Maps API Error</h4><p>There was an error loading Google Maps. This might be due to an invalid API key or API key restrictions.</p></div>';
+    }
+  </script>
+  
   <!-- Google Maps JavaScript API with your API key from server -->
   <script>
-    // API key is injected by the server from .env file
-    const API_KEY = "{{mapApiKey}}";
+    // Check if we have an API key
+    const apiKey = "{{mapApiKey}}";
+    console.log("API Key available:", !!apiKey);
+    
+    // If API key is missing, show a message
+    if (!apiKey) {
+      document.getElementById('map').innerHTML = '<div class="alert alert-warning p-5 text-center"><h4>Missing API Key</h4><p>No Google Maps API key found. Please check your server configuration.</p></div>';
+    }
   </script>
   <script src="https://maps.googleapis.com/maps/api/js?key={{mapApiKey}}&callback=initMap&libraries=places" async defer></script>
   
@@ -71,4 +84,3 @@
   <script src="/js/map.js"></script>
 </body>
 </html>
-{{!-- End of map.hbs --}}

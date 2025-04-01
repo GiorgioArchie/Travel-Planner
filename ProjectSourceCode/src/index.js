@@ -1,14 +1,19 @@
-const express = require('express'); // To build an application server or API
+const express = require('express');
 const app = express();
 const handlebars = require('express-handlebars');
 const path = require('path');
-const pgp = require('pg-promise')(); // To connect to the Postgres DB from the node server
+const pgp = require('pg-promise')();
 const bodyParser = require('body-parser');
-const session = require('express-session'); // To set the session object. To store or access session data, use the `req.session`, which is (generally) serialized as JSON by the store.
-const bcrypt = require('bcryptjs'); //  To hash passwords
-const axios = require('axios'); // To make HTTP requests from our server. We'll learn more about it in Part C.
-const fileUpload = require('express-fileupload');
-const { google } = require('googleapis'); //inlude google's API
+const session = require('express-session');
+const bcrypt = require('bcryptjs');
+const axios = require('axios');
+
+// Debug environment variables
+console.log('Environment variables check:');
+console.log('- API_KEY exists:', !!process.env.API_KEY);
+console.log('- POSTGRES_DB exists:', !!process.env.POSTGRES_DB);
+console.log('- POSTGRES_USER exists:', !!process.env.POSTGRES_USER);
+console.log('- POSTGRES_PASSWORD exists:', !!process.env.POSTGRES_PASSWORD);
 
 // Set up handlebars
 const hbs = handlebars.create({
@@ -49,22 +54,6 @@ app.set('view engine', 'hbs');
 // Set the 'views' directory
 app.set('views', path.join(__dirname, 'views'));
 
-// OAuth2 Client configuration
-const CLIENT_ID = 'YOUR_CLIENT_ID';
-const CLIENT_SECRET = 'YOUR_CLIENT_SECRET';
-const REDIRECT_URI = 'YOUR_REDIRECT_URI';
-const oauth2Client = new google.auth.OAuth2(
-  CLIENT_ID,
-  CLIENT_SECRET,
-  REDIRECT_URI
-);
-
-// Assume you have stored tokens from a previous authentication
-oauth2Client.setCredentials({
-  access_token: 'ACCESS_TOKEN',
-  refresh_token: 'REFRESH_TOKEN'
-});
-
 // Serve static files from resources directory
 app.use('/css', express.static(path.join(__dirname, 'resources/css')));
 app.use('/js', express.static(path.join(__dirname, 'resources/js')));
@@ -76,7 +65,7 @@ app.use(bodyParser.json());
 
 // Set up sessions
 app.use(session({
-  secret: 'your_session_secret',
+  secret: process.env.SESSION_SECRET || 'default_secret',
   resave: false,
   saveUninitialized: true,
   cookie: { secure: false } // set to true if using https
@@ -173,33 +162,6 @@ app.post('/login', async (req, res) => {
     if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.redirect('/login?message=Invalid username or password');
     }
-
-app.get('/calendar', async (req, res) => {
-  const calendar = google.calendar({version: 'v3', auth: oauth2Client});
-  try {
-    const response = await calendar.events.list({
-      calendarId: 'primary', // or a specific calendar ID
-      timeMin: (new Date()).toISOString(),
-      maxResults: 10,
-      singleEvents: true,
-      orderBy: 'startTime'
-    });
-    
-    // Format events for the template
-    const events = response.data.items.map(event => ({
-      summary: event.summary || 'No Title',
-      start: event.start.dateTime || event.start.date,
-      end: event.end.dateTime || event.end.date
-    }));
-    
-    // Render the Handlebars template and pass the events data
-    res.render('calendar', { events });
-  } catch (error) {
-    console.error('Error fetching events:', error);
-    res.status(500).send('Error fetching events');
-  }
-});
-
     
     // Set up session
     req.session.user = {
@@ -240,12 +202,12 @@ app.get('/events', isAuthenticated, (req, res) => {
   });
 });
 
-// Route for map page
+// Map route with API key
 app.get('/map', isAuthenticated, (req, res) => {
-  // Get the Google Maps API key from environment variables
-  const mapApiKey = process.env.GOOGLE_MAPS_API_KEY || '';
+  // Get API key from environment variables
+  const mapApiKey = process.env.API_KEY || '';
   
-  // If the API key is missing, log a warning
+  console.log('Map page requested, API key exists:', !!mapApiKey);
   if (!mapApiKey) {
     console.warn('WARNING: Google Maps API key is missing from environment variables');
   }
@@ -254,90 +216,9 @@ app.get('/map', isAuthenticated, (req, res) => {
     LoggedIn: true,
     username: req.session.user.username,
     title: 'Interactive Map',
-    mapApiKey: mapApiKey  // Pass the API key to the template
+    mapApiKey: mapApiKey
   });
 });
-
-// Route for journal page
-app.get('/journal', isAuthenticated, async (req, res) => {
-  try {
-    const username = req.session.user.username;
-    console.log(`[GET /journal] User: ${username}`);
-    const trips = await db.any(
-      `SELECT 
-         trips.trip_id AS id,
-         trips.city,
-         trips.country,
-         trips.date_start,
-         trips.date_end
-       FROM trips
-       JOIN uses_to_trips ON trips.trip_id = uses_to_trips.trip_id
-       WHERE uses_to_trips.username = '${username}';`,
-    );    
-    console.log(`[GET /journal] trips:`, trips);
-
-    res.render('pages/journal', {
-      trips,
-      username,
-      LoggedIn: true,
-      title: 'Journal'
-    });
-  } catch (err) {
-    console.error('Error loading journal page:', err);
-    res.redirect('/login?message=Error loading journal page');
-  }
-});
-
-app.use(fileUpload());
-
-app.post('/journal/submit', isAuthenticated, async (req, res) => {
-  try {
-    const username = req.session.user.username;
-    const { tripId, description } = req.body;
-
-    if (!tripId || !description) {
-      return res.redirect('/journal?message=Please fill out all fields.');
-    }
-
-    // Insert journal
-    const journalResult = await db.one(
-      `INSERT INTO journals (username, comments) VALUES ('${username}', '${description}') RETURNING journal_id;`
-    );
-
-    const journalId = journalResult.journal_id;
-    console.log(`[POST /journal/submit] ID: ${journalId}`);
-
-    // Handle image upload (optional)
-    if (req.files && req.files.photo) {
-      const photo = req.files.photo;
-      const uploadPath = path.join(__dirname, 'resources/img/uploads', photo.name);
-      console.log(`[POST /journal/submit] Photo upload:`, photo.name);
-
-      await photo.mv(uploadPath); // move to local folder
-      console.log(`[POST /journal/submit] Photo saved to: ${uploadPath}`);
-
-      // Save image info
-      const imageResult = await db.one(
-        `INSERT INTO images (image_url, image_caption) VALUES ($1, $2) RETURNING image_id`,
-        [`/img/uploads/${photo.name}`, photo.name]
-      );
-
-      const imageId = imageResult.image_id;
-      console.log(`[POST /journal/submit] ImageID: ${imageId}`);
-
-      // Link journal and image
-      await db.none(
-        `INSERT INTO journal_to_image (journal_id, image_id) VALUES ('${journalId}', '${imageId}');`
-      );
-    }
-
-    res.redirect('/journal?message=Journal entry saved successfully!');
-  } catch (err) {
-    console.error('Error submitting journal:', err);
-    res.redirect('/journal?message=Error saving journal entry. Please try again.');
-  }
-});
-
 
 // Start the server
 const PORT = process.env.PORT || 3000;

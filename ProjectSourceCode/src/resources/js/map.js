@@ -5,20 +5,35 @@ const destinations = [];
 
 // Initialize the map
 function initMap() {
-  // Create a new map centered at a default location (world view)
-  map = new google.maps.Map(document.getElementById("map"), {
-    center: { lat: 20, lng: 0 },
-    zoom: 2,
-    mapTypeId: "terrain",
-    mapTypeControl: true,
-    fullscreenControl: true,
-  });
+  console.log("Initializing map...");
+  
+  try {
+    // Create a new map centered at a default location (world view)
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: { lat: 20, lng: 0 },
+      zoom: 2,
+      mapTypeId: "terrain",
+      mapTypeControl: true,
+      fullscreenControl: true,
+    });
+    
+    console.log("Map initialized successfully");
 
-  // Set up the form submission handler
-  document.getElementById("addDestinationForm").addEventListener("submit", addDestination);
+    // Set up the form submission handler
+    const form = document.getElementById("addDestinationForm");
+    if (form) {
+      form.addEventListener("submit", addDestination);
+      console.log("Form handler attached");
+    } else {
+      console.error("Could not find form element");
+    }
 
-  // Load any saved destinations from localStorage (for demo purposes)
-  loadSavedDestinations();
+    // Load any saved destinations from localStorage (for demo purposes)
+    loadSavedDestinations();
+  } catch (error) {
+    console.error("Error initializing map:", error);
+    document.getElementById('map').innerHTML = '<div class="alert alert-danger p-5 text-center"><h4>Map Initialization Error</h4><p>There was an error initializing the map: ' + error.message + '</p></div>';
+  }
 }
 
 // Add a new destination from the form
@@ -33,11 +48,14 @@ function addDestination(event) {
     return;
   }
   
+  console.log(`Geocoding ${cityName}, ${countryName}...`);
+  
   // Use the Places API to geocode the location
   const geocoder = new google.maps.Geocoder();
   geocoder.geocode({ address: `${cityName}, ${countryName}` }, (results, status) => {
     if (status === "OK" && results[0]) {
       const location = results[0].geometry.location;
+      console.log(`Location found: ${location.lat()}, ${location.lng()}`);
       
       // Create a new destination object
       const destination = {
@@ -64,6 +82,7 @@ function addDestination(event) {
       document.getElementById("cityName").value = "";
       document.getElementById("countryName").value = "";
     } else {
+      console.error(`Geocoding failed with status: ${status}`);
       alert("Could not find that location. Please try again.");
     }
   });
@@ -181,16 +200,22 @@ function removeDestination(id) {
 
 // Save destinations to localStorage (demo purposes)
 function saveSavedDestinations() {
-  localStorage.setItem("travelPlannerDestinations", JSON.stringify(destinations));
+  try {
+    localStorage.setItem("travelPlannerDestinations", JSON.stringify(destinations));
+    console.log(`Saved ${destinations.length} destinations to localStorage`);
+  } catch (e) {
+    console.error("Error saving to localStorage:", e);
+  }
 }
 
 // Load saved destinations from localStorage (demo purposes)
 function loadSavedDestinations() {
-  const saved = localStorage.getItem("travelPlannerDestinations");
-  
-  if (saved) {
-    try {
+  try {
+    const saved = localStorage.getItem("travelPlannerDestinations");
+    
+    if (saved) {
       const savedDestinations = JSON.parse(saved);
+      console.log(`Loading ${savedDestinations.length} saved destinations`);
       
       // Add each saved destination
       savedDestinations.forEach(destination => {
@@ -198,8 +223,15 @@ function loadSavedDestinations() {
         addMarkerToMap(destination);
         addDestinationToList(destination);
       });
-    } catch (e) {
-      console.error("Error loading saved destinations", e);
+    } else {
+      console.log("No saved destinations found");
     }
+  } catch (e) {
+    console.error("Error loading saved destinations:", e);
   }
 }
+
+// Add event listener for when DOM is loaded
+window.addEventListener('DOMContentLoaded', (event) => {
+  console.log('DOM fully loaded, ready for map initialization');
+});
