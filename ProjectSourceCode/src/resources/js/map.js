@@ -291,7 +291,28 @@ function addMarkerToMap(destination) {
   marker.destinationId = destination.id;
   
   // Create an info window with enhanced content
-  updateMarkerInfoWindow(marker, destination);
+  const infoWindow = new google.maps.InfoWindow({
+    content: getInfoWindowContent(destination)
+  });
+  
+  // Store the info window with the marker
+  marker.infoWindow = infoWindow;
+  
+  // Add click listener to open info window
+  marker.addListener("click", () => {
+    // Close any other open info windows
+    markers.forEach(m => {
+      if (m.infoWindow && m !== marker) {
+        m.infoWindow.close();
+      }
+    });
+    
+    // Update content before opening
+    infoWindow.setContent(getInfoWindowContent(destination));
+    
+    // Open this info window
+    infoWindow.open(map, marker);
+  });
   
   // Add the marker to our array
   markers.push(marker);
@@ -309,83 +330,73 @@ function addMarkerToMap(destination) {
   }
 }
 
-// Update or create an info window for a marker
-function updateMarkerInfoWindow(marker, destination) {
+// Helper function to generate info window content
+function getInfoWindowContent(destination) {
+  console.log("Generating content for:", destination);
+  
   // Find related trips
-  const destinationTrips = trips.filter(trip => trip.destinationId === destination.id);
+  const destinationTrips = trips.filter(trip => {
+    console.log("Comparing trip.destinationId:", trip.destinationId, "with destination.id:", destination.id);
+    return Number(trip.destinationId) === Number(destination.id);
+  });
   
-  // Prepare trips HTML
-  let tripsHtml = '<p>No trips planned</p>';
-  if (destinationTrips.length > 0) {
-    tripsHtml = '<ul class="mb-0">';
-    destinationTrips.forEach(trip => {
-      tripsHtml += `<li>${trip.startDate} to ${trip.endDate}</li>`;
-      
-      // Find events for this trip
-      const tripEvents = events.filter(event => event.tripId === trip.id);
-      if (tripEvents.length > 0) {
-        tripsHtml += '<ul>';
-        tripEvents.forEach(event => {
-          tripsHtml += `<li>${event.activity} (${event.startTime || 'No time set'})`;
-          
-          // Find journal entries for this event
-          const eventJournals = journalEntries.filter(journal => journal.eventId === event.id);
-          if (eventJournals.length > 0) {
-            tripsHtml += '<ul>';
-            eventJournals.forEach(journal => {
-              tripsHtml += `<li class="font-italic">"${journal.comments.substring(0, 30)}${journal.comments.length > 30 ? '...' : ''}"</li>`;
-            });
-            tripsHtml += '</ul>';
-          }
-          
-          tripsHtml += '</li>';
-        });
-        tripsHtml += '</ul>';
-      }
-    });
-    tripsHtml += '</ul>';
-  }
+  console.log("Related trips found:", destinationTrips);
   
-  // Create content for the info window
-  const content = `
-    <div style="max-width: 300px; padding: 10px;">
-      <h5>${destination.city}, ${destination.country}</h5>
+  // Prepare trips HTML - add a default message even if no trips exist
+  let content = `
+    <div style="max-width: 300px; padding: 10px; color: black;">
+      <h5 style="color: black;">${destination.city}, ${destination.country}</h5>
       <hr class="my-2">
       <div>
-        <h6>Trips & Events:</h6>
-        ${tripsHtml}
-      </div>
-    </div>
+        <h6 style="color: black;">Trips & Events:</h6>
   `;
   
-  // Create an info window if it doesn't exist
-  if (!marker.infoWindow) {
-    marker.infoWindow = new google.maps.InfoWindow();
-    
-    // Add click listener to open info window
-    marker.addListener("click", () => {
-      // Close any other open info windows
-      markers.forEach(m => {
-        if (m.infoWindow && m !== marker) {
-          m.infoWindow.close();
-        }
-      });
+  if (destinationTrips.length === 0) {
+    content += '<p style="color: black;">No trips planned for this destination yet. Add a trip from the Trips tab.</p>';
+  } else {
+    content += '<ul class="mb-0" style="color: black;">';
+    destinationTrips.forEach(trip => {
+      content += `<li style="color: black;"><strong>${trip.startDate} to ${trip.endDate}</strong></li>`;
       
-      // Open this info window
-      marker.infoWindow.open(map, marker);
+      // Find events for this trip
+      const tripEvents = events.filter(event => Number(event.tripId) === Number(trip.id));
+      if (tripEvents.length > 0) {
+        content += '<ul style="color: black;">';
+        tripEvents.forEach(event => {
+          content += `<li style="color: black;"><strong>${event.activity}</strong> (${event.startTime || 'No time set'})`;
+          
+          // Find journal entries for this event
+          const eventJournals = journalEntries.filter(journal => Number(journal.eventId) === Number(event.id));
+          if (eventJournals.length > 0) {
+            content += '<ul style="color: black;">';
+            eventJournals.forEach(journal => {
+              content += `<li class="font-italic" style="color: black;">"${journal.comments.substring(0, 30)}${journal.comments.length > 30 ? '...' : ''}"</li>`;
+            });
+            content += '</ul>';
+          }
+          
+          content += '</li>';
+        });
+        content += '</ul>';
+      } else {
+        content += '<ul><li style="color: black;">No events added for this trip yet</li></ul>';
+      }
     });
+    content += '</ul>';
   }
   
-  // Update the content
-  marker.infoWindow.setContent(content);
+  content += '</div></div>';
+  
+  return content;
 }
 
-// Update info windows for all markers
+// Update all marker info windows
 function updateAllMarkerInfoWindows() {
   markers.forEach(marker => {
-    const destination = destinations.find(d => d.id === marker.destinationId);
+    const destination = destinations.find(d => Number(d.id) === Number(marker.destinationId));
     if (destination) {
-      updateMarkerInfoWindow(marker, destination);
+      // Update the content of the info window
+      marker.infoWindow.setContent(getInfoWindowContent(destination));
     }
   });
 }
@@ -410,7 +421,7 @@ function addDestinationToList(destination) {
   item.addEventListener("click", (e) => {
     if (!e.target.classList.contains("remove-btn")) {
       // Find the marker for this destination
-      const marker = markers.find(m => m.destinationId === destination.id);
+      const marker = markers.find(m => Number(m.destinationId) === Number(destination.id));
       
       if (marker) {
         // Center and zoom the map
@@ -454,11 +465,11 @@ function addTripToList(trip) {
   item.addEventListener("click", (e) => {
     if (!e.target.classList.contains("remove-btn")) {
       // Find the destination
-      const destination = destinations.find(d => d.id === trip.destinationId);
+      const destination = destinations.find(d => Number(d.id) === Number(trip.destinationId));
       
       if (destination) {
         // Find the marker
-        const marker = markers.find(m => m.destinationId === destination.id);
+        const marker = markers.find(m => Number(m.destinationId) === Number(destination.id));
         
         if (marker) {
           // Center and zoom the map
@@ -512,15 +523,15 @@ function addEventToList(event) {
   item.addEventListener("click", (e) => {
     if (!e.target.classList.contains("remove-btn")) {
       // Find the trip
-      const trip = trips.find(t => t.id === event.tripId);
+      const trip = trips.find(t => Number(t.id) === Number(event.tripId));
       
       if (trip) {
         // Find the destination
-        const destination = destinations.find(d => d.id === trip.destinationId);
+        const destination = destinations.find(d => Number(d.id) === Number(trip.destinationId));
         
         if (destination) {
           // Find the marker
-          const marker = markers.find(m => m.destinationId === destination.id);
+          const marker = markers.find(m => Number(m.destinationId) === Number(destination.id));
           
           if (marker) {
             // Center and zoom the map
@@ -566,19 +577,19 @@ function addJournalEntryToList(journalEntry) {
   item.addEventListener("click", (e) => {
     if (!e.target.classList.contains("remove-btn")) {
       // Find the event
-      const event = events.find(ev => ev.id === journalEntry.eventId);
+      const event = events.find(ev => Number(ev.id) === Number(journalEntry.eventId));
       
       if (event) {
         // Find the trip
-        const trip = trips.find(t => t.id === event.tripId);
+        const trip = trips.find(t => Number(t.id) === Number(event.tripId));
         
         if (trip) {
           // Find the destination
-          const destination = destinations.find(d => d.id === trip.destinationId);
+          const destination = destinations.find(d => Number(d.id) === Number(trip.destinationId));
           
           if (destination) {
             // Find the marker
-            const marker = markers.find(m => m.destinationId === destination.id);
+            const marker = markers.find(m => Number(m.destinationId) === Number(destination.id));
             
             if (marker) {
               // Center and zoom the map
@@ -665,18 +676,18 @@ function updateEventDropdown() {
 // Remove a destination by ID
 function removeDestination(id) {
   // Find the index of this destination
-  const index = destinations.findIndex(d => d.id === id);
+  const index = destinations.findIndex(d => Number(d.id) === Number(id));
   
   if (index !== -1) {
     // Remove the marker from the map
-    const markerIndex = markers.findIndex(m => m.destinationId === id);
+    const markerIndex = markers.findIndex(m => Number(m.destinationId) === Number(id));
     if (markerIndex !== -1) {
       markers[markerIndex].setMap(null);
       markers.splice(markerIndex, 1);
     }
     
     // Remove related trips
-    const relatedTrips = trips.filter(trip => trip.destinationId === id).map(trip => trip.id);
+    const relatedTrips = trips.filter(trip => Number(trip.destinationId) === Number(id)).map(trip => trip.id);
     relatedTrips.forEach(tripId => removeTrip(tripId));
     
     // Remove from destinations array
@@ -696,11 +707,11 @@ function removeDestination(id) {
 // Remove a trip by ID
 function removeTrip(id) {
   // Find the index of this trip
-  const index = trips.findIndex(t => t.id === id);
+  const index = trips.findIndex(t => Number(t.id) === Number(id));
   
   if (index !== -1) {
     // Remove related events
-    const relatedEvents = events.filter(event => event.tripId === id).map(event => event.id);
+    const relatedEvents = events.filter(event => Number(event.tripId) === Number(id)).map(event => event.id);
     relatedEvents.forEach(eventId => removeEvent(eventId));
     
     // Remove from trips array
@@ -723,11 +734,11 @@ function removeTrip(id) {
 // Remove an event by ID
 function removeEvent(id) {
   // Find the index of this event
-  const index = events.findIndex(e => e.id === id);
+  const index = events.findIndex(e => Number(e.id) === Number(id));
   
   if (index !== -1) {
     // Remove related journal entries
-    const relatedJournals = journalEntries.filter(journal => journal.eventId === id).map(journal => journal.id);
+    const relatedJournals = journalEntries.filter(journal => Number(journal.eventId) === Number(id)).map(journal => journal.id);
     relatedJournals.forEach(journalId => removeJournalEntry(journalId));
     
     // Remove from events array
@@ -750,7 +761,7 @@ function removeEvent(id) {
 // Remove a journal entry by ID
 function removeJournalEntry(id) {
   // Find the index of this journal entry
-  const index = journalEntries.findIndex(j => j.id === id);
+  const index = journalEntries.findIndex(j => Number(j.id) === Number(id));
   
   if (index !== -1) {
     // Remove from journal entries array
@@ -819,9 +830,6 @@ function loadSavedData() {
     updateDestinationDropdown();
     updateTripDropdown();
     updateEventDropdown();
-    
-    // Update info windows
-    updateAllMarkerInfoWindows();
     
     console.log("Data loaded from localStorage");
   } catch (e) {
