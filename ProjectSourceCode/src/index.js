@@ -170,7 +170,7 @@ app.post('/login', async (req, res) => {
     };
     
     // Redirect to events page
-    res.redirect('/events');
+    res.redirect('/map');
   } catch (err) {
     console.error('Login error:', err);
     res.redirect('/login?message=Error during login. Please try again.');
