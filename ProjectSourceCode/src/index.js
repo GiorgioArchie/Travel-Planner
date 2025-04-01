@@ -234,6 +234,23 @@ app.get('/map', isAuthenticated, (req, res) => {
   });
 });
 
+// Add this route after your other routes
+app.get('/calendar', isAuthenticated, (req, res) => {
+  // Construct the embed URL using your Calendar ID and desired time zone
+  const calendarId = 'c_03f444f99225ea19fd6f2845cf898dcd4b9abb839ef60b898d624781811e0862@group.calendar.google.com';
+  const timeZone = 'America/Denver';
+  
+  // Encode the calendar ID and time zone to safely place in the URL
+  const googleCalendarURL = `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(calendarId)}&ctz=${encodeURIComponent(timeZone)}`;
+
+  res.render('pages/calendar', {
+    title: 'Calendar',
+    LoggedIn: true,
+    username: req.session.user.username,
+    googleCalendarURL
+  });
+});
+
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
