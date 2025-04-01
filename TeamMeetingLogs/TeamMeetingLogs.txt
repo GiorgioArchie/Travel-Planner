@@ -6,18 +6,39 @@ Goals accomplished:
 -Jack: case diagram, Google maps API key
 -Laura: deliverables, readme
 
-To do:
--Arielle: 
--Alexander: 
--Giorgio: calendar
--Jack: 
--Laura: 
+Internal Meeting 2:
+Done last week
+Alexander: Calendar.hbs and index.js
+Arielle: SQL and ensuring login/register listens to database
+Giorgio: All trips page
+Jack: Home page with map
+Laura: journal page
+
+To-Do's:
+Alexander: fix calendar to use opensource front end calendar and use our databases and link callendar to events
+Arielle: SQL updates for tables specifically adding another table trips to journals, SQL queries for adding trips
+Giorgio: Connecting add event page to all trips 
+Jack: Verify API, interactive Map to trips, Latitude & Longitude, add trip feature added to home page
+Laura: Connecting journal page to trip names, and adding journals into database
 
 
-
-TA Meeting:
+TA Meeting 1:
 Decisions made: trip data entity, event entity (day, time, duration, comments), main focus on interactive map, 
 
 Alternative actions/options discussed: Calendar open source
 
 Follow-up items, including agreed-on roles and responsibilities: create object graph of different entity types, create trip, event and calendar pages, update wireframe
+
+TA Meeting 2:
+Decisions made: Not using google calendar API, detail exactly what "trip", "events" and "journals"
+
+Alternative actions/options discussed: 
+
+Follow-up items, including agreed-on roles and responsibilities: 
+Alexander: fix calendar to use opensource front end calendar and use our databases and link callendar to events
+Arielle: SQL updates for tables specifically adding another table trips to journals, SQL queries for adding trips
+Giorgio: Connecting add event page to all trips 
+Jack: Verify API, interactive Map to trips, Latitude & Longitude, add trip feature added to home page
+Laura: Connecting journal page to trip names, and adding journals into database
+
+
