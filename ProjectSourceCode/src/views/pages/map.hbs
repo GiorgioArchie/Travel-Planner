@@ -1,4 +1,4 @@
-{{!-- map.hbs --}}
+{{!-- Enhanced map.hbs with Trip, Event and Journal features --}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,39 +13,205 @@
   <link rel="stylesheet" href="/css/style.css">
   <!-- Map specific CSS -->
   <link rel="stylesheet" href="/css/map.css">
+  <!-- Date picker -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+  
+  <style>
+    .tab-content {
+      padding: 15px;
+      border: 1px solid #dee2e6;
+      border-top: none;
+      border-radius: 0 0 0.25rem 0.25rem;
+    }
+    .destination-item {
+      cursor: pointer;
+    }
+    .destination-item:hover {
+      background-color: #f8f9fa;
+    }
+    .destination-item .remove-btn {
+      display: none;
+    }
+    .destination-item:hover .remove-btn {
+      display: block;
+    }
+  </style>
 </head>
 <body>
   <div class="container-fluid p-0">
     <!-- Optional navbar could go here if needed -->
     
     <div class="row no-gutters">
-      <!-- Sidebar for destinations -->
-      <div class="col-md-3 bg-light p-3" style="height: 100vh; overflow-y: auto;">
-        <h3 class="text-center mb-4">My Destinations</h3>
+      <!-- Enhanced sidebar for destinations, trips, events and journal -->
+      <div class="col-md-3 bg-light p-0" style="height: 100vh; overflow-y: auto;">
+        <!-- Tabs for different types of content -->
+        <ul class="nav nav-tabs nav-fill" id="sidebarTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <a class="nav-link active" id="destinations-tab" data-toggle="tab" href="#destinations" role="tab">Destinations</a>
+          </li>
+          <li class="nav-item" role="presentation">
+            <a class="nav-link" id="trips-tab" data-toggle="tab" href="#trips" role="tab">Trips</a>
+          </li>
+          <li class="nav-item" role="presentation">
+            <a class="nav-link" id="events-tab" data-toggle="tab" href="#events" role="tab">Events</a>
+          </li>
+          <li class="nav-item" role="presentation">
+            <a class="nav-link" id="journal-tab" data-toggle="tab" href="#journal" role="tab">Journal</a>
+          </li>
+        </ul>
         
-        <!-- Add destination form -->
-        <div class="card mb-3">
-          <div class="card-header">
-            <strong>Add Destination</strong>
-          </div>
-          <div class="card-body">
-            <form id="addDestinationForm">
-              <div class="form-group">
-                <label for="cityName">City</label>
-                <input type="text" class="form-control" id="cityName" placeholder="e.g. Paris">
+        <!-- Tab content -->
+        <div class="tab-content" id="sidebarTabContent">
+          <!-- Destinations Tab -->
+          <div class="tab-pane fade show active" id="destinations" role="tabpanel">
+            <h4 class="text-center mb-3">My Destinations</h4>
+            
+            <!-- Add destination form -->
+            <div class="card mb-3">
+              <div class="card-header">
+                <strong>Add Destination</strong>
               </div>
-              <div class="form-group">
-                <label for="countryName">Country</label>
-                <input type="text" class="form-control" id="countryName" placeholder="e.g. France">
+              <div class="card-body">
+                <form id="addDestinationForm">
+                  <div class="form-group">
+                    <label for="cityName">City</label>
+                    <input type="text" class="form-control" id="cityName" placeholder="e.g. Paris">
+                  </div>
+                  <div class="form-group">
+                    <label for="countryName">Country</label>
+                    <input type="text" class="form-control" id="countryName" placeholder="e.g. France">
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-block">Add to Map</button>
+                </form>
               </div>
-              <button type="submit" class="btn btn-primary btn-block">Add to Map</button>
-            </form>
+            </div>
+            
+            <!-- Destinations list -->
+            <div class="list-group" id="destinationsList">
+              <!-- Destinations will be added here dynamically -->
+            </div>
           </div>
-        </div>
-        
-        <!-- Destinations list -->
-        <div class="list-group" id="destinationsList">
-          <!-- Destinations will be added here dynamically -->
+          
+          <!-- Trips Tab -->
+          <div class="tab-pane fade" id="trips" role="tabpanel">
+            <h4 class="text-center mb-3">My Trips</h4>
+            
+            <!-- Add trip form -->
+            <div class="card mb-3">
+              <div class="card-header">
+                <strong>Add Trip</strong>
+              </div>
+              <div class="card-body">
+                <form id="addTripForm">
+                  <div class="form-group">
+                    <label for="tripDestination">Destination</label>
+                    <select class="form-control" id="tripDestination" required>
+                      <option value="">Select a destination</option>
+                      <!-- Options will be populated dynamically -->
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="tripStartDate">Start Date</label>
+                    <input type="text" class="form-control datepicker" id="tripStartDate" placeholder="Select date">
+                  </div>
+                  <div class="form-group">
+                    <label for="tripEndDate">End Date</label>
+                    <input type="text" class="form-control datepicker" id="tripEndDate" placeholder="Select date">
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-block">Save Trip</button>
+                </form>
+              </div>
+            </div>
+            
+            <!-- Trips list -->
+            <div class="list-group" id="tripsList">
+              <!-- Trips will be added here dynamically -->
+            </div>
+          </div>
+          
+          <!-- Events Tab -->
+          <div class="tab-pane fade" id="events" role="tabpanel">
+            <h4 class="text-center mb-3">My Events</h4>
+            
+            <!-- Add event form -->
+            <div class="card mb-3">
+              <div class="card-header">
+                <strong>Add Event</strong>
+              </div>
+              <div class="card-body">
+                <form id="addEventForm">
+                  <div class="form-group">
+                    <label for="eventTrip">Trip</label>
+                    <select class="form-control" id="eventTrip" required>
+                      <option value="">Select a trip</option>
+                      <!-- Options will be populated dynamically -->
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="eventActivity">Activity</label>
+                    <input type="text" class="form-control" id="eventActivity" placeholder="e.g. Visit Eiffel Tower">
+                  </div>
+                  <div class="form-row">
+                    <div class="form-group col-md-6">
+                      <label for="eventStartTime">Start Time</label>
+                      <input type="time" class="form-control" id="eventStartTime">
+                    </div>
+                    <div class="form-group col-md-6">
+                      <label for="eventEndTime">End Time</label>
+                      <input type="time" class="form-control" id="eventEndTime">
+                    </div>
+                  </div>
+                  <div class="form-group">
+                    <label for="eventHotelBooking">Hotel Booking (optional)</label>
+                    <input type="text" class="form-control" id="eventHotelBooking" placeholder="Hotel details">
+                  </div>
+                  <div class="form-group">
+                    <label for="eventPlaneTickets">Plane Tickets (optional)</label>
+                    <input type="text" class="form-control" id="eventPlaneTickets" placeholder="Flight details">
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-block">Save Event</button>
+                </form>
+              </div>
+            </div>
+            
+            <!-- Events list -->
+            <div class="list-group" id="eventsList">
+              <!-- Events will be added here dynamically -->
+            </div>
+          </div>
+          
+          <!-- Journal Tab -->
+          <div class="tab-pane fade" id="journal" role="tabpanel">
+            <h4 class="text-center mb-3">My Journal</h4>
+            
+            <!-- Add journal entry form -->
+            <div class="card mb-3">
+              <div class="card-header">
+                <strong>Add Journal Entry</strong>
+              </div>
+              <div class="card-body">
+                <form id="addJournalForm">
+                  <div class="form-group">
+                    <label for="journalEvent">Event</label>
+                    <select class="form-control" id="journalEvent" required>
+                      <option value="">Select an event</option>
+                      <!-- Options will be populated dynamically -->
+                    </select>
+                  </div>
+                  <div class="form-group">
+                    <label for="journalComments">Comments</label>
+                    <textarea class="form-control" id="journalComments" rows="4" placeholder="Write about your experience..."></textarea>
+                  </div>
+                  <button type="submit" class="btn btn-primary btn-block">Save Journal Entry</button>
+                </form>
+              </div>
+            </div>
+            
+            <!-- Journal entries list -->
+            <div class="list-group" id="journalList">
+              <!-- Journal entries will be added here dynamically -->
+            </div>
+          </div>
         </div>
       </div>
       
@@ -59,6 +225,7 @@
   <!-- JavaScript dependencies -->
   <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   
   <!-- Error handler for Google Maps -->
   <script>
@@ -67,17 +234,7 @@
     }
   </script>
   
-  <!-- Google Maps JavaScript API with your API key from server -->
-  <script>
-    // Check if we have an API key
-    const apiKey = "{{mapApiKey}}";
-    console.log("API Key available:", !!apiKey);
-    
-    // If API key is missing, show a message
-    if (!apiKey) {
-      document.getElementById('map').innerHTML = '<div class="alert alert-warning p-5 text-center"><h4>Missing API Key</h4><p>No Google Maps API key found. Please check your server configuration.</p></div>';
-    }
-  </script>
+  <!-- Google Maps JavaScript API with API key -->
   <script src="https://maps.googleapis.com/maps/api/js?key={{mapApiKey}}&callback=initMap&libraries=places" async defer></script>
   
   <!-- Custom map JavaScript -->
