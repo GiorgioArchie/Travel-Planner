@@ -19,9 +19,7 @@ CREATE TABLE users (
 CREATE TABLE trips (
   trip_id SERIAL PRIMARY KEY,
   date_start DATE,
-  date_end DATE,
-  city VARCHAR(50),
-  country VARCHAR(50)
+  date_end DATE
 );
 
 -- Create events table
@@ -29,9 +27,9 @@ CREATE TABLE events (
   event_id SERIAL PRIMARY KEY,
   start_time TIME,
   end_time TIME,
-  activity VARCHAR(100),
-  hotel_booking VARCHAR(100),
-  plane_tickets VARCHAR(100)
+  city VARCHAR(50),
+  country VARCHAR(50),
+  description VARCHAR(500),
 );
 
 -- Create relationship tables
