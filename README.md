@@ -18,6 +18,7 @@ In addition to planning, the app also serves as a travel journal, where users ca
 - Bootstraps
 
 ## Prerequisites to run the application - Any software that needs to be installed to run the application
+- npm install express-fileupload
 ## Instructions on how to run the application locally.
 ## How to run the tests
 ## Link to the deployed application
