@@ -8,13 +8,6 @@ const session = require('express-session');
 const bcrypt = require('bcryptjs');
 const axios = require('axios');
 
-// Debug environment variables
-console.log('Environment variables check:');
-console.log('- API_KEY exists:', !!process.env.API_KEY);
-console.log('- POSTGRES_DB exists:', !!process.env.POSTGRES_DB);
-console.log('- POSTGRES_USER exists:', !!process.env.POSTGRES_USER);
-console.log('- POSTGRES_PASSWORD exists:', !!process.env.POSTGRES_PASSWORD);
-
 // Set up handlebars
 const hbs = handlebars.create({
   extname: 'hbs',
@@ -26,7 +19,7 @@ const hbs = handlebars.create({
   }
 });
 
-// database configuration
+// Database configuration
 const dbConfig = {
   host: 'db', // the database server
   port: 5432, // the database port
@@ -37,10 +30,10 @@ const dbConfig = {
 
 const db = pgp(dbConfig);
 
-// test your database
+// Test database connection
 db.connect()
   .then(obj => {
-    console.log('Database connection successful'); // you can view this message in the docker compose logs
+    console.log('Database connection successful');
     obj.done(); // success, release the connection;
   })
   .catch(error => {
@@ -82,7 +75,7 @@ app.get('/register', (req, res) => {
   res.render('pages/register', { message, title: 'Register' });
 });
 
-// Enhanced registration route with debug logging
+// Process registration form
 app.post('/register', async (req, res) => {
   try {
     console.log('Registration attempt with data:', {
@@ -202,29 +195,10 @@ app.get('/events', isAuthenticated, (req, res) => {
   });
 });
 
-app.get('/journal', isAuthenticated, (req, res) => {
-  res.render('pages/journal', { 
-    LoggedIn: true,
-    username: req.session.user.username,
-    title: 'Journal'
-  });
-});
-app.get('/trips', isAuthenticated, (req, res) => {
-  res.render('pages/trips', { 
-    LoggedIn: true,
-    username: req.session.user.username,
-    title: 'Trips'
-  });
-});
-// Map route with API key
+// Route for map page
 app.get('/map', isAuthenticated, (req, res) => {
-  // Get API key from environment variables
+  // Get the Google Maps API key
   const mapApiKey = process.env.API_KEY || '';
-  
-  console.log('Map page requested, API key exists:', !!mapApiKey);
-  if (!mapApiKey) {
-    console.warn('WARNING: Google Maps API key is missing from environment variables');
-  }
   
   res.render('pages/map', { 
     LoggedIn: true,
@@ -234,21 +208,358 @@ app.get('/map', isAuthenticated, (req, res) => {
   });
 });
 
-// Add this route after your other routes
-app.get('/calendar', isAuthenticated, (req, res) => {
-  // Construct the embed URL using your Calendar ID and desired time zone
-  const calendarId = 'c_03f444f99225ea19fd6f2845cf898dcd4b9abb839ef60b898d624781811e0862@group.calendar.google.com';
-  const timeZone = 'America/Denver';
-  
-  // Encode the calendar ID and time zone to safely place in the URL
-  const googleCalendarURL = `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(calendarId)}&ctz=${encodeURIComponent(timeZone)}`;
+// API ROUTES FOR TRAVEL DATA
 
-  res.render('pages/calendar', {
-    title: 'Calendar',
-    LoggedIn: true,
-    username: req.session.user.username,
-    googleCalendarURL
-  });
+// Destinations API
+// Get all destinations
+app.get('/api/destinations', isAuthenticated, async (req, res) => {
+  try {
+    const destinations = await db.any('SELECT * FROM destinations');
+    res.json(destinations);
+  } catch (err) {
+    console.error('Error fetching destinations:', err);
+    res.status(500).json({ error: 'Failed to fetch destinations' });
+  }
+});
+
+// Create a new destination
+app.post('/api/destinations', isAuthenticated, async (req, res) => {
+  try {
+    const { city, country, latitude, longitude } = req.body;
+    
+    // Create destination
+    const result = await db.one(
+      'INSERT INTO destinations (city, country, latitude, longitude) VALUES ($1, $2, $3, $4) RETURNING id', 
+      [city, country, latitude, longitude]
+    );
+    
+    res.status(201).json({
+      id: result.id,
+      city,
+      country,
+      latitude,
+      longitude
+    });
+  } catch (err) {
+    console.error('Error creating destination:', err);
+    res.status(500).json({ error: 'Failed to create destination' });
+  }
+});
+
+// Delete a destination
+app.delete('/api/destinations/:id', isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Delete destination (cascading will handle related records)
+    await db.none('DELETE FROM destinations WHERE id = $1', [id]);
+    
+    res.status(200).json({ message: 'Destination deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting destination:', err);
+    res.status(500).json({ error: 'Failed to delete destination' });
+  }
+});
+
+// Trips API
+// Get all trips for the current user
+app.get('/api/trips', isAuthenticated, async (req, res) => {
+  try {
+    const username = req.session.user.username;
+    
+    const trips = await db.any(`
+      SELECT t.trip_id, t.date_start, t.date_end, t.city, t.country, d.id as destination_id
+      FROM trips t
+      JOIN uses_to_trips u ON t.trip_id = u.trip_id
+      LEFT JOIN destinations d ON t.city = d.city AND t.country = d.country
+      WHERE u.username = $1
+    `, [username]);
+    
+    res.json(trips.map(trip => ({
+      id: trip.trip_id,
+      destinationId: trip.destination_id,
+      startDate: trip.date_start,
+      endDate: trip.date_end,
+      destination: `${trip.city}, ${trip.country}`
+    })));
+  } catch (err) {
+    console.error('Error fetching trips:', err);
+    res.status(500).json({ error: 'Failed to fetch trips' });
+  }
+});
+
+// Create a new trip
+app.post('/api/trips', isAuthenticated, async (req, res) => {
+  try {
+    const { destinationId, startDate, endDate, city, country } = req.body;
+    const username = req.session.user.username;
+    
+    // Start a transaction
+    await db.tx(async t => {
+      // Insert trip
+      const tripResult = await t.one(
+        'INSERT INTO trips (date_start, date_end, city, country) VALUES ($1, $2, $3, $4) RETURNING trip_id',
+        [startDate, endDate, city, country]
+      );
+      
+      // Link user to trip
+      await t.none(
+        'INSERT INTO uses_to_trips (username, trip_id) VALUES ($1, $2)',
+        [username, tripResult.trip_id]
+      );
+      
+      res.status(201).json({
+        id: tripResult.trip_id,
+        destinationId,
+        startDate,
+        endDate,
+        destination: `${city}, ${country}`
+      });
+    });
+  } catch (err) {
+    console.error('Error creating trip:', err);
+    res.status(500).json({ error: 'Failed to create trip' });
+  }
+});
+
+// Delete a trip
+app.delete('/api/trips/:id', isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const username = req.session.user.username;
+    
+    // Verify trip belongs to user
+    const trip = await db.oneOrNone(
+      'SELECT * FROM uses_to_trips WHERE trip_id = $1 AND username = $2',
+      [id, username]
+    );
+    
+    if (!trip) {
+      return res.status(404).json({ error: 'Trip not found or unauthorized' });
+    }
+    
+    // Delete trip (cascading will handle related records)
+    await db.none('DELETE FROM trips WHERE trip_id = $1', [id]);
+    
+    res.status(200).json({ message: 'Trip deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting trip:', err);
+    res.status(500).json({ error: 'Failed to delete trip' });
+  }
+});
+
+// Events API
+// Get all events for the current user
+app.get('/api/events', isAuthenticated, async (req, res) => {
+  try {
+    const username = req.session.user.username;
+    
+    const events = await db.any(`
+      SELECT e.event_id, e.activity, e.start_time, e.end_time, e.hotel_booking, e.plane_tickets,
+             t.trip_id, t.city, t.country
+      FROM events e
+      JOIN trips_to_events te ON e.event_id = te.event_id
+      JOIN trips t ON te.trip_id = t.trip_id
+      JOIN uses_to_trips ut ON t.trip_id = ut.trip_id
+      WHERE ut.username = $1
+    `, [username]);
+    
+    res.json(events.map(event => ({
+      id: event.event_id,
+      tripId: event.trip_id,
+      activity: event.activity,
+      startTime: event.start_time,
+      endTime: event.end_time,
+      hotelBooking: event.hotel_booking,
+      planeTickets: event.plane_tickets,
+      trip: `${event.city}, ${event.country}`
+    })));
+  } catch (err) {
+    console.error('Error fetching events:', err);
+    res.status(500).json({ error: 'Failed to fetch events' });
+  }
+});
+
+// Create a new event
+app.post('/api/events', isAuthenticated, async (req, res) => {
+  try {
+    const { tripId, activity, startTime, endTime, hotelBooking, planeTickets } = req.body;
+    const username = req.session.user.username;
+    
+    // Verify trip belongs to user
+    const trip = await db.oneOrNone(
+      'SELECT * FROM uses_to_trips WHERE trip_id = $1 AND username = $2',
+      [tripId, username]
+    );
+    
+    if (!trip) {
+      return res.status(404).json({ error: 'Trip not found or unauthorized' });
+    }
+    
+    // Start a transaction
+    await db.tx(async t => {
+      // Insert event
+      const eventResult = await t.one(
+        'INSERT INTO events (activity, start_time, end_time, hotel_booking, plane_tickets) VALUES ($1, $2, $3, $4, $5) RETURNING event_id',
+        [activity, startTime, endTime, hotelBooking, planeTickets]
+      );
+      
+      // Link event to trip
+      await t.none(
+        'INSERT INTO trips_to_events (trip_id, event_id) VALUES ($1, $2)',
+        [tripId, eventResult.event_id]
+      );
+      
+      // Get trip details for the response
+      const tripDetails = await t.one(
+        'SELECT city, country FROM trips WHERE trip_id = $1',
+        [tripId]
+      );
+      
+      res.status(201).json({
+        id: eventResult.event_id,
+        tripId,
+        activity,
+        startTime,
+        endTime,
+        hotelBooking,
+        planeTickets,
+        trip: `${tripDetails.city}, ${tripDetails.country}`
+      });
+    });
+  } catch (err) {
+    console.error('Error creating event:', err);
+    res.status(500).json({ error: 'Failed to create event' });
+  }
+});
+
+// Delete an event
+app.delete('/api/events/:id', isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const username = req.session.user.username;
+    
+    // Verify event belongs to user's trip
+    const event = await db.oneOrNone(`
+      SELECT e.event_id
+      FROM events e
+      JOIN trips_to_events te ON e.event_id = te.event_id
+      JOIN trips t ON te.trip_id = t.trip_id
+      JOIN uses_to_trips ut ON t.trip_id = ut.trip_id
+      WHERE e.event_id = $1 AND ut.username = $2
+    `, [id, username]);
+    
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found or unauthorized' });
+    }
+    
+    // Delete event (cascading will handle related records)
+    await db.none('DELETE FROM events WHERE event_id = $1', [id]);
+    
+    res.status(200).json({ message: 'Event deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting event:', err);
+    res.status(500).json({ error: 'Failed to delete event' });
+  }
+});
+
+// Journal API
+// Get all journal entries for the current user
+app.get('/api/journals', isAuthenticated, async (req, res) => {
+  try {
+    const username = req.session.user.username;
+    
+    const journals = await db.any(`
+      SELECT j.journal_id, j.comments, e.event_id, e.activity
+      FROM journals j
+      JOIN events_to_journals ej ON j.journal_id = ej.journal_id
+      JOIN events e ON ej.event_id = e.event_id
+      WHERE j.username = $1
+    `, [username]);
+    
+    res.json(journals.map(journal => ({
+      id: journal.journal_id,
+      eventId: journal.event_id,
+      event: journal.activity,
+      comments: journal.comments
+    })));
+  } catch (err) {
+    console.error('Error fetching journal entries:', err);
+    res.status(500).json({ error: 'Failed to fetch journal entries' });
+  }
+});
+
+// Create a new journal entry
+app.post('/api/journals', isAuthenticated, async (req, res) => {
+  try {
+    const { eventId, comments } = req.body;
+    const username = req.session.user.username;
+    
+    // Verify event belongs to user's trip
+    const event = await db.oneOrNone(`
+      SELECT e.event_id, e.activity
+      FROM events e
+      JOIN trips_to_events te ON e.event_id = te.event_id
+      JOIN trips t ON te.trip_id = t.trip_id
+      JOIN uses_to_trips ut ON t.trip_id = ut.trip_id
+      WHERE e.event_id = $1 AND ut.username = $2
+    `, [eventId, username]);
+    
+    if (!event) {
+      return res.status(404).json({ error: 'Event not found or unauthorized' });
+    }
+    
+    // Start a transaction
+    await db.tx(async t => {
+      // Insert journal entry
+      const journalResult = await t.one(
+        'INSERT INTO journals (username, comments) VALUES ($1, $2) RETURNING journal_id',
+        [username, comments]
+      );
+      
+      // Link journal to event
+      await t.none(
+        'INSERT INTO events_to_journals (event_id, journal_id) VALUES ($1, $2)',
+        [eventId, journalResult.journal_id]
+      );
+      
+      res.status(201).json({
+        id: journalResult.journal_id,
+        eventId,
+        event: event.activity,
+        comments
+      });
+    });
+  } catch (err) {
+    console.error('Error creating journal entry:', err);
+    res.status(500).json({ error: 'Failed to create journal entry' });
+  }
+});
+
+// Delete a journal entry
+app.delete('/api/journals/:id', isAuthenticated, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const username = req.session.user.username;
+    
+    // Verify journal belongs to user
+    const journal = await db.oneOrNone(
+      'SELECT * FROM journals WHERE journal_id = $1 AND username = $2',
+      [id, username]
+    );
+    
+    if (!journal) {
+      return res.status(404).json({ error: 'Journal entry not found or unauthorized' });
+    }
+    
+    // Delete journal entry (cascading will handle related records)
+    await db.none('DELETE FROM journals WHERE journal_id = $1', [id]);
+    
+    res.status(200).json({ message: 'Journal entry deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting journal entry:', err);
+    res.status(500).json({ error: 'Failed to delete journal entry' });
+  }
 });
 
 // Start the server
