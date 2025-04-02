@@ -103,12 +103,13 @@
               </div>
               <div class="card-body">
                 <form id="addTripForm">
+                   <div class="form-group">
+                <label for="tripName">Trip Name</label>
+                 <input type="text" class="form-control" id="tripName" placeholder="Enter Name" required>
+                    </div>
                   <div class="form-group">
-                    <label for="tripDestination">Destination</label>
-                    <select class="form-control" id="tripDestination" required>
-                      <option value="">Select a destination</option>
-                      <!-- Options will be populated dynamically -->
-                    </select>
+                <label for="tripDestination">Destination</label>
+                <input type="text" class="form-control" id="tripDestination" placeholder="Enter destination" required>
                   </div>
                   <div class="form-group">
                     <label for="tripStartDate">Start Date</label>
