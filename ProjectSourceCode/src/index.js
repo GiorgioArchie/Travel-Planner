@@ -195,6 +195,30 @@ app.get('/events', isAuthenticated, (req, res) => {
   });
 });
 
+app.get('/calendar', isAuthenticated, (req, res) => {
+  res.render('pages/calendar', { 
+    LoggedIn: true,
+    username: req.session.user.username,
+    title: 'Calendar'
+  });
+});
+
+app.get('/trips', isAuthenticated, (req, res) => {
+  res.render('pages/trips', { 
+    LoggedIn: true,
+    username: req.session.user.username,
+    title: 'Trips'
+  });
+});
+
+app.get('/journal', isAuthenticated, (req, res) => {
+  res.render('pages/journal', { 
+    LoggedIn: true,
+    username: req.session.user.username,
+    title: 'Journal'
+  });
+});
+
 // Route for map page
 app.get('/map', isAuthenticated, (req, res) => {
   // Get the Google Maps API key
