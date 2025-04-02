@@ -1,4 +1,3 @@
--- Create the users table first (needed for registration)
 CREATE TABLE IF NOT EXISTS users (
   username VARCHAR(50) PRIMARY KEY,
   password VARCHAR(100) NOT NULL
@@ -7,10 +6,9 @@ CREATE TABLE IF NOT EXISTS users (
 -- Create trips table
 CREATE TABLE IF NOT EXISTS trips (
   trip_id SERIAL PRIMARY KEY,
+  trip_name VARCHAR(50),
   date_start DATE,
-  date_end DATE,
-  city VARCHAR(50),
-  country VARCHAR(50)
+  date_end DATE
 );
 
 -- Create events table
@@ -19,12 +17,15 @@ CREATE TABLE IF NOT EXISTS events (
   start_time TIME,
   end_time TIME,
   activity VARCHAR(100),
-  hotel_booking VARCHAR(100),
-  plane_tickets VARCHAR(100)
+  description VARCHAR(500),
+  city VARCHAR(100),
+  country VARCHAR(100),
+  longitude DECIMAL,
+  latitude DECIMAL
 );
 
 -- Create users to trips relationship table
-CREATE TABLE IF NOT EXISTS uses_to_trips (
+CREATE TABLE IF NOT EXISTS users_to_trips (
   id SERIAL PRIMARY KEY,
   username VARCHAR(50) REFERENCES users(username),
   trip_id INTEGER REFERENCES trips(trip_id)
@@ -45,9 +46,9 @@ CREATE TABLE IF NOT EXISTS journals (
 );
 
 -- Create events to journals relationship table
-CREATE TABLE IF NOT EXISTS events_to_journals (
+CREATE TABLE IF NOT EXISTS trips_to_journals (
   id SERIAL PRIMARY KEY,
-  event_id INTEGER REFERENCES events(event_id),
+  trip_id INTEGER REFERENCES trips(trip_id),
   journal_id INTEGER REFERENCES journals(journal_id)
 );
 
