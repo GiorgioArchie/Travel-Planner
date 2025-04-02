@@ -195,39 +195,7 @@ app.get('/events', isAuthenticated, (req, res) => {
   });
 });
 
-app.get('/journal', isAuthenticated, (req, res) => {
-  res.render('pages/journal', { 
-    LoggedIn: true,
-    username: req.session.user.username,
-    title: 'Journal'
-  });
-});
-
-app.get('/trips', isAuthenticated, (req, res) => {
-  const username = req.session.user.username;
-  const query = `
-    SELECT t.*
-    FROM trips t
-    INNER JOIN users_to_trips ut ON t.trip_id = ut.trip_id
-    WHERE ut.username = $1
-  `;
-  
-  db.any(query, [username])
-    .then(trips => {
-      res.render('pages/trips', { 
-        LoggedIn: true,
-        username: username,
-        title: 'Trips',
-        trips: trips // trips is already an array of rows
-      });
-    })
-    .catch(error => {
-      console.error('Error querying trips:', error);
-      res.status(500).send('Server Error');
-    });
-});
-
-// Map route with API key
+// Route for map page
 app.get('/map', isAuthenticated, (req, res) => {
   // Get the Google Maps API key
   const mapApiKey = process.env.API_KEY || '';
