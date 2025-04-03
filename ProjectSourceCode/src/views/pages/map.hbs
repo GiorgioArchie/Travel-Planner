@@ -1,4 +1,4 @@
-{{!-- Enhanced map.hbs with Trip, Event and Journal features --}}
+{{!-- Enhanced map.hbs with Trip feature --}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -36,13 +36,20 @@
       display: block;
     }
   </style>
+
+  <!-- Error handler for Google Maps -->
+  <script>
+    function gm_authFailure() {
+      document.getElementById('map').innerHTML = '<div class="alert alert-danger p-5 text-center"><h4>Google Maps API Error</h4><p>There was an error loading Google Maps. This might be due to an invalid API key or API key restrictions.</p></div>';
+    }
+  </script>
 </head>
 <body>
   <div class="container-fluid p-0">
     <!-- Optional navbar could go here if needed -->
     
     <div class="row no-gutters">
-      <!-- Enhanced sidebar for destinations, trips, events and journal -->
+      <!-- Enhanced sidebar for destinations and trips -->
       <div class="col-md-3 bg-light p-0" style="height: 100vh; overflow-y: auto;">
         <!-- Tabs for different types of content -->
         <ul class="nav nav-tabs nav-fill" id="sidebarTabs" role="tablist">
@@ -51,12 +58,6 @@
           </li>
           <li class="nav-item" role="presentation">
             <a class="nav-link" id="trips-tab" data-toggle="tab" href="#trips" role="tab">Trips</a>
-          </li>
-          <li class="nav-item" role="presentation">
-            <a class="nav-link" id="events-tab" data-toggle="tab" href="#events" role="tab">Events</a>
-          </li>
-          <li class="nav-item" role="presentation">
-            <a class="nav-link" id="journal-tab" data-toggle="tab" href="#journal" role="tab">Journal</a>
           </li>
         </ul>
         
@@ -74,14 +75,14 @@
               <div class="card-body">
                 <form id="addDestinationForm">
                   <div class="form-group">
-                    <label for="cityName">City</label>
-                    <input type="text" class="form-control" id="cityName" placeholder="e.g. Paris">
+                    <label for="cityName">Destination City</label>
+                    <input type="text" class="form-control" id="cityName" placeholder="e.g. Paris" required>
                   </div>
                   <div class="form-group">
                     <label for="countryName">Country</label>
-                    <input type="text" class="form-control" id="countryName" placeholder="e.g. France">
+                    <input type="text" class="form-control" id="countryName" placeholder="e.g. France" required>
                   </div>
-                  <button type="submit" class="btn btn-primary btn-block">Add to Map</button>
+                  <button type="submit" class="btn btn-primary btn-block">Add Destination</button>
                 </form>
               </div>
             </div>
@@ -103,13 +104,16 @@
               </div>
               <div class="card-body">
                 <form id="addTripForm">
-                   <div class="form-group">
-                <label for="tripName">Trip Name</label>
-                 <input type="text" class="form-control" id="tripName" placeholder="Enter Name" required>
-                    </div>
                   <div class="form-group">
-                <label for="tripDestination">Destination</label>
-                <input type="text" class="form-control" id="tripDestination" placeholder="Enter destination" required>
+                    <label for="tripName">Trip Name</label>
+                    <input type="text" class="form-control" id="tripName" placeholder="Enter Name" required>
+                  </div>
+                  <div class="form-group">
+                    <label for="tripDestination">Destination</label>
+                    <select class="form-control" id="tripDestination" required>
+                      <option value="">Select a destination</option>
+                      <!-- Options will be populated dynamically -->
+                    </select>
                   </div>
                   <div class="form-group">
                     <label for="tripStartDate">Start Date</label>
@@ -119,7 +123,7 @@
                     <label for="tripEndDate">End Date</label>
                     <input type="text" class="form-control datepicker" id="tripEndDate" placeholder="Select date">
                   </div>
-                  <button type="submit" class="btn btn-primary btn-block">Save Trip</button>
+                  <button type="submit" class="btn btn-primary btn-block">Create Trip</button>
                 </form>
               </div>
             </div>
@@ -127,90 +131,6 @@
             <!-- Trips list -->
             <div class="list-group" id="tripsList">
               <!-- Trips will be added here dynamically -->
-            </div>
-          </div>
-          
-          <!-- Events Tab -->
-          <div class="tab-pane fade" id="events" role="tabpanel">
-            <h4 class="text-center mb-3">My Events</h4>
-            
-            <!-- Add event form -->
-            <div class="card mb-3">
-              <div class="card-header">
-                <strong>Add Event</strong>
-              </div>
-              <div class="card-body">
-                <form id="addEventForm">
-                  <div class="form-group">
-                    <label for="eventTrip">Trip</label>
-                    <select class="form-control" id="eventTrip" required>
-                      <option value="">Select a trip</option>
-                      <!-- Options will be populated dynamically -->
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label for="eventActivity">Activity</label>
-                    <input type="text" class="form-control" id="eventActivity" placeholder="e.g. Visit Eiffel Tower">
-                  </div>
-                  <div class="form-row">
-                    <div class="form-group col-md-6">
-                      <label for="eventStartTime">Start Time</label>
-                      <input type="time" class="form-control" id="eventStartTime">
-                    </div>
-                    <div class="form-group col-md-6">
-                      <label for="eventEndTime">End Time</label>
-                      <input type="time" class="form-control" id="eventEndTime">
-                    </div>
-                  </div>
-                  <div class="form-group">
-                    <label for="eventHotelBooking">Hotel Booking (optional)</label>
-                    <input type="text" class="form-control" id="eventHotelBooking" placeholder="Hotel details">
-                  </div>
-                  <div class="form-group">
-                    <label for="eventPlaneTickets">Plane Tickets (optional)</label>
-                    <input type="text" class="form-control" id="eventPlaneTickets" placeholder="Flight details">
-                  </div>
-                  <button type="submit" class="btn btn-primary btn-block">Save Event</button>
-                </form>
-              </div>
-            </div>
-            
-            <!-- Events list -->
-            <div class="list-group" id="eventsList">
-              <!-- Events will be added here dynamically -->
-            </div>
-          </div>
-          
-          <!-- Journal Tab -->
-          <div class="tab-pane fade" id="journal" role="tabpanel">
-            <h4 class="text-center mb-3">My Journal</h4>
-            
-            <!-- Add journal entry form -->
-            <div class="card mb-3">
-              <div class="card-header">
-                <strong>Add Journal Entry</strong>
-              </div>
-              <div class="card-body">
-                <form id="addJournalForm">
-                  <div class="form-group">
-                    <label for="journalEvent">Event</label>
-                    <select class="form-control" id="journalEvent" required>
-                      <option value="">Select an event</option>
-                      <!-- Options will be populated dynamically -->
-                    </select>
-                  </div>
-                  <div class="form-group">
-                    <label for="journalComments">Comments</label>
-                    <textarea class="form-control" id="journalComments" rows="4" placeholder="Write about your experience..."></textarea>
-                  </div>
-                  <button type="submit" class="btn btn-primary btn-block">Save Journal Entry</button>
-                </form>
-              </div>
-            </div>
-            
-            <!-- Journal entries list -->
-            <div class="list-group" id="journalList">
-              <!-- Journal entries will be added here dynamically -->
             </div>
           </div>
         </div>
@@ -228,17 +148,23 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
   
-  <!-- Error handler for Google Maps -->
-  <script>
-    function gm_authFailure() {
-      document.getElementById('map').innerHTML = '<div class="alert alert-danger p-5 text-center"><h4>Google Maps API Error</h4><p>There was an error loading Google Maps. This might be due to an invalid API key or API key restrictions.</p></div>';
-    }
-  </script>
-  
   <!-- Google Maps JavaScript API with API key -->
   <script src="https://maps.googleapis.com/maps/api/js?key={{mapApiKey}}&callback=initMap&libraries=places" async defer></script>
   
   <!-- Custom map JavaScript -->
   <script src="/js/map.js"></script>
+  
+  <!-- Custom script to handle create trip redirect -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const tripForm = document.getElementById('addTripForm');
+      if (tripForm) {
+        tripForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          window.location.href = '/calendar';
+        });
+      }
+    });
+  </script>
 </body>
 </html>
