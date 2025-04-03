@@ -19,21 +19,19 @@
 
   <div class="container">
     <h1>All Trips Page</h1>
-    <div class="trip-card">
-      <input type="text" placeholder="Trip Name">
-      <textarea placeholder="Description:"></textarea>
-      <button>Select</button>
-    </div>
-    <div class="trip-card">
-      <input type="text" placeholder="Trip Name">
-      <textarea placeholder="Description:"></textarea>
-      <button>Select</button>
-    </div>
-    <div class="trip-card">
-      <input type="text" placeholder="Trip Name">
-      <textarea placeholder="Description:"></textarea>
-      <button>Select</button>
-    </div>
+    {{#if trips.length}}
+      {{#each trips}}
+        <div class="trip-card">
+          <h2>{{trip_name}}</h2>
+          <p>Start Date: {{date_start}}</p>
+          <p>End Date: {{date_end}}</p>
+          <!-- Include additional trip details as needed -->
+          <button>Select</button>
+        </div>
+      {{/each}}
+    {{else}}
+      <p>No trips found. Add a trip.</p>
+    {{/if}}
     <footer>
       <p>*Map Photo as Background*</p>
     </footer>
