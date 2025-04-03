@@ -97,6 +97,8 @@ app.get('/register', (req, res) => {
   res.render('pages/register', { message, title: 'Register' });
 });
 
+// This is a comment to represent a change
+
 // Process registration form
 app.post('/register', async (req, res) => {
   try {
