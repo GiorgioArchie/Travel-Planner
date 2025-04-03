@@ -586,6 +586,143 @@ app.delete('/api/journals/:id', isAuthenticated, async (req, res) => {
   }
 });
 
+// GET Journal Page
+app.get('/journal', isAuthenticated, async (req, res) => {
+  try {
+    const username = req.session.user.username;
+    const selectedTripId = req.query.tripId || null;
+
+    // Fetch user's trips
+    const trips = await db.any(
+      `SELECT trips.trip_id AS id, city, country, date_start, date_end
+       FROM trips
+       JOIN user_to_trips ON trips.trip_id = user_to_trips.trip_id
+       WHERE user_to_trips.username = $1;`,
+      [username]
+    );
+
+    let journalData = [];
+    if (selectedTripId) {
+      journalData = await db.any(
+        `SELECT 
+          journals.journal_id, 
+          journals.comments, 
+          images.image_id, 
+          images.image_url, 
+          images.image_caption
+         FROM trips
+         JOIN trips_to_events ON trips.trip_id = trips_to_events.trip_id
+         JOIN journals ON trips_to_events.journal_id = journals.journal_id
+         LEFT JOIN journal_to_image ON journals.journal_id = journal_to_image.journal_id
+         LEFT JOIN images ON journal_to_image.image_id = images.image_id
+         WHERE trips.trip_id = $1 AND journals.username = $2;`,
+        [selectedTripId, username]
+      );
+    }
+
+    res.render('pages/journal', { 
+      LoggedIn: true,
+      username,
+      title: 'Journal',
+      trips,
+      selectedTripId,
+      journalData
+    });
+  } catch (err) {
+    console.error('[GET /journal] Error:', err);
+    res.redirect('/login?message=Error loading journal page');
+  }
+});
+
+// Add Journal Entry + Optional Photo
+app.post('/journal/add', isAuthenticated, async (req, res) => {
+  try {
+    const username = req.session.user.username;
+    const { tripId, comment } = req.body;
+    const photo = req.files ? req.files.photo : null;
+
+    // Insert journal
+    const journalResult = await db.one(
+      `INSERT INTO journals (username, comments) VALUES ($1, $2) RETURNING journal_id;`,
+      [username, comment]
+    );
+    const journalId = journalResult.journal_id;
+
+    // Link journal to trip
+    const eventLink = await db.oneOrNone(
+      `SELECT event_id FROM trips_to_events WHERE trip_id = $1 LIMIT 1;`,
+      [tripId]
+    );
+    if (eventLink) {
+      await db.none(
+        `INSERT INTO trips_to_events (trip_id, event_id, journal_id) VALUES ($1, $2, $3);`,
+        [tripId, eventLink.event_id, journalId]
+      );
+    }
+
+    // Handle photo upload
+    if (photo) {
+      const uniqueName = Date.now() + '-' + photo.name.replace(/\s+/g, '_');
+      const uploadPath = path.join(__dirname, 'resources/img/uploads', uniqueName);
+      await photo.mv(uploadPath);
+
+      const imageResult = await db.one(
+        `INSERT INTO images (image_url, image_caption) VALUES ($1, $2) RETURNING image_id;`,
+        [`/img/uploads/${uniqueName}`, photo.name]
+      );
+      await db.none(
+        `INSERT INTO journal_to_image (journal_id, image_id) VALUES ($1, $2);`,
+        [journalId, imageResult.image_id]
+      );
+    }
+
+    res.redirect(`/journal?tripId=${tripId}&message=Journal entry added`);
+  } catch (err) {
+    console.error('[POST /journal/add] Error:', err);
+    res.redirect('/journal?message=Error adding journal');
+  }
+});
+
+// Delete Journal Entry + Photo
+app.post('/journal/delete', isAuthenticated, async (req, res) => {
+  try {
+    const { journalId, tripId } = req.body;
+
+    // Delete photo links
+    await db.none(`DELETE FROM journal_to_image WHERE journal_id = $1;`, [journalId]);
+
+    // Delete from trips_to_events
+    await db.none(`DELETE FROM trips_to_events WHERE journal_id = $1;`, [journalId]);
+
+    // Delete journal
+    await db.none(`DELETE FROM journals WHERE journal_id = $1;`, [journalId]);
+
+    res.redirect(`/journal?tripId=${tripId}&message=Journal deleted`);
+  } catch (err) {
+    console.error('[POST /journal/delete] Error:', err);
+    res.redirect('/journal?message=Error deleting journal');
+  }
+});
+
+// Edit Journal Entry
+app.post('/journal/edit', isAuthenticated, async (req, res) => {
+  try {
+    const { journalId, tripId, comment } = req.body;
+    console.log(`[POST /journal/edit] Editing journal ${journalId}`);
+
+    await db.none(
+      `UPDATE journals SET comments = $1 WHERE journal_id = $2;`,
+      [comment, journalId]
+    );
+
+    res.redirect(`/journal?tripId=${tripId}&message=Journal updated successfully`);
+  } catch (err) {
+    console.error('[POST /journal/edit] Error:', err);
+    res.redirect('/journal?message=Error editing journal');
+  }
+});
+
+
 // Start the server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
