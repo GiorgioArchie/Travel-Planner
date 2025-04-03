@@ -722,11 +722,14 @@ app.post('/journal/edit', isAuthenticated, async (req, res) => {
   }
 });
 
+//####################################### TESTS CODE FOR LAB #######################################
 app.get('/welcome', (req, res) => {
   res.json({status: 'success', message: 'Welcome!'});
 });
 
-module.exports = app.listen(3000);
+//module.exports = app.listen(3000);
+
+//####################################### TESTS CODE FOR LAB #######################################
 
 // Start the server
 const PORT = process.env.PORT || 3000;
