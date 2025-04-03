@@ -727,12 +727,8 @@ app.get('/welcome', (req, res) => {
   res.json({status: 'success', message: 'Welcome!'});
 });
 
-//module.exports = app.listen(3000);
-
-//####################################### TESTS CODE FOR LAB #######################################
-
 // Start the server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+module.exports = app.listen(3000);
+console.log(`Server running on http://localhost:${PORT}`);
+
