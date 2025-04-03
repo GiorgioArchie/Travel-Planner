@@ -69,12 +69,6 @@ app.get('/', (req, res) => {
   res.redirect('/login');
 });
 
-app.get('/new_route', (req, res) => {
-  // sasdf
-  // AudioListener;kdjf
-  res.redirect('/login_workdfs');
-});
-
 // Route for registration page
 app.get('/register', (req, res) => {
   const message = req.query.message || '';
