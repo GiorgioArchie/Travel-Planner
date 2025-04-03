@@ -204,11 +204,27 @@ app.get('/calendar', isAuthenticated, (req, res) => {
 });
 
 app.get('/trips', isAuthenticated, (req, res) => {
-  res.render('pages/trips', { 
-    LoggedIn: true,
-    username: req.session.user.username,
-    title: 'Trips'
-  });
+  const username = req.session.user.username;
+  const query = `
+    SELECT t.*
+    FROM trips t
+    INNER JOIN users_to_trips ut ON t.trip_id = ut.trip_id
+    WHERE ut.username = $1
+  `;
+  
+  db.any(query, [username])
+    .then(trips => {
+      res.render('pages/trips', { 
+        LoggedIn: true,
+        username: username,
+        title: 'Trips',
+        trips: trips // trips is already an array of rows
+      });
+    })
+    .catch(error => {
+      console.error('Error querying trips:', error);
+      res.status(500).send('Server Error');
+    });
 });
 
 app.get('/journal', isAuthenticated, (req, res) => {
