@@ -98,6 +98,7 @@ app.get('/register', (req, res) => {
 });
 
 // This is a comment to represent a change
+// Another comment
 
 // Process registration form
 app.post('/register', async (req, res) => {
