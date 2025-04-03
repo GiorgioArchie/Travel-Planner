@@ -1,0 +1,11 @@
+GITHUB Proper Steps
+Git pull origin main
+Git checkout user1 (creates user1 branch to work on)
+Git push –set upstream (whatever git wants)
+User2: git pull origin main
+Git push
+go to github ui
+find branch
+make pull request
+get approval
+merge pull request to main
