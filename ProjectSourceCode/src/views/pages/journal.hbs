@@ -1,6 +1,7 @@
 {{> message }}
 
 <main class="container mt-4 mb-5">
+
   <h2 class="mb-4">My Journal</h2>
 
   <!-- Trip Selection -->
@@ -10,7 +11,7 @@
       <option value="" disabled selected>-- Please select a trip --</option>
       {{#each trips}}
         <option value="{{this.id}}" {{#if (eq ../selectedTripId this.id)}}selected{{/if}}>
-          {{this.city}}, {{this.country}} ({{formatDate this.date_start}})
+          {{this.city}}, {{this.country}} ({{this.date_start}})
         </option>
       {{/each}}
     </select>
@@ -72,7 +73,7 @@
     {{/each}}
 
   {{else if selectedTripId}}
-    <div class="alert alert-info">No journal entries for this trip. Add your first entry below!</div>
+    <p>No journal entries for this trip.</p>
 
     <!-- Add Journal Form -->
     <form action="/journal/add" method="POST" enctype="multipart/form-data" class="mt-4">
@@ -88,24 +89,8 @@
         <input type="file" name="photo" id="photo" class="form-control" accept="image/*" />
       </div>
 
-      <button type="submit" class="btn btn-success">Add Journal Entry</button>
+      <button type="submit" class="btn btn-success">Add Journal</button>
     </form>
-  {{else}}
-    <div class="alert alert-info">
-      Select a trip to view or add journal entries.
-    </div>
   {{/if}}
-</main>
 
-{{!-- Add a helper to format dates if needed --}}
-<script>
-  // Optional: Add date formatting if server-side handlebars doesn't handle it
-  function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-  }
-</script>
+</main>
