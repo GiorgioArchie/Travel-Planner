@@ -180,11 +180,11 @@ app.get('/logout', (req, res) => {
 // Authentication middleware
 const isAuthenticated = (req, res, next) => {
   if (req.session.user && req.session.user.loggedIn) {
-    return next();
+    next();
+  } else {
+    res.redirect('/login?message=Please log in to access this page');
   }
-  return res.status(401).send('Please log in to access this page');
 };
-
 
 // Route for events page (protected)
 app.get('/events', isAuthenticated, (req, res) => {
@@ -203,26 +203,56 @@ app.get('/calendar', isAuthenticated, (req, res) => {
   });
 });
 
-app.get('/trips', isAuthenticated, async (req, res) => {
-  try {
+app.get('/trips', isAuthenticated, async (req, res, next) => {
+  console.log('GET /trips route hit');
+  console.log('username: ', username)
+  try{
     const username = req.session.user.username;
-
     const trips = await db.any(`
       SELECT t.*
       FROM trips t
       INNER JOIN users_to_trips ut ON t.trip_id = ut.trip_id
       WHERE ut.username = $1
-    `, [username]);
+      `, [username]);
+    
+      console.log('Trips for', username, trips);
+      res.render('pages/trips', {
+        LoggedIn: true,
+        username,
+        title: 'Trips',
+        trips
+      });
+    } catch (err) {
+      next(err);
+    }
+  });
 
-    res.render('pages/trips', {
-      LoggedIn: true,
-      username: username,
-      title: 'Trips',
-      trips: trips
-    });
+app.post('/trips', isAuthenticated, async (req, res, next) => {
+  const username    = req.session.user.username;
+  console.log('username: ', username);
+  const { trip_name, date_start, date_end } = req.body;
+
+  if (!trip_name || !date_start || !date_end) {
+    return res.status(400).send('Start and end dates are required.');
+  }
+
+  try {
+    // insert into trips, grab the auto‑gen trip_id
+    const { trip_id } = await db.one(`
+    INSERT INTO trips (trip_name, date_start, date_end)
+    VALUES ($1, $2, $3)
+    RETURNING trip_id
+    `, [trip_name, date_start, date_end]);
+
+    await db.none(`
+      INSERT INTO users_to_trips (username, trip_id)
+      VALUES ($1, $2)
+      `, [username, trip_id]);
+
+    // redirect into the “trip details” page
+    res.redirect(`/trips/`);
   } catch (err) {
-    console.error('Error querying trips:', err);
-    res.status(500).send('Server Error');
+    next(err);
   }
 });
 
