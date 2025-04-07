@@ -1,0 +1,86 @@
+**User Acceptance Test Plan**
+
+**Project Name:** Travel Planner
+**Team Name:** [Your Team Name Here]  
+**Test Document Location:** /milestones/UAT_Plan.md  
+**Test Environment:** Localhost (`http://localhost:3000`) using Docker Compose setup
+
+---
+
+### Feature 1: User Registration
+
+**Objective:** Verify that users can successfully register and the data is stored correctly.
+
+**Test Cases:**
+1. **Valid Registration**
+   - **Input:** username: `user01`, password: `password01`, confirmPassword: `password01`
+   - **Expected Result:** Redirects to login page with success message, and user is stored in `users` table.
+
+2. **Missing Required Fields**
+   - **Input:** username: ``, password: `password01`
+   - **Expected Result:** Registration fails, message "Username and password are required" is shown on page.
+
+3. **Duplicate Username**
+   - **Input:** username: `user01`, password: `password01`
+   - **Expected Result:** Registration fails, message "Username already exists" shown.
+
+**Test Data:** See `/docker-entrypoint-initdb.d/create.sql` and manual form input.
+
+**User Acceptance Testers:** tbd
+
+**Test Results:** To be recorded during execution week.
+
+---
+
+### Feature 2: User Login
+
+**Objective:** Confirm that users can log in with valid credentials and are rejected with invalid ones.
+
+**Test Cases:**
+1. **Successful Login**
+   - **Input:** username: `user01`, password: `password01`
+   - **Expected Result:** Redirect to `/map` page, session created.
+
+2. **Incorrect Password**
+   - **Input:** username: `user01`, password: `wrongpassword`
+   - **Expected Result:** Message "Invalid username or password" displayed.
+
+3. **Nonexistent User**
+   - **Input:** username: `no_user`, password: `no_password`
+   - **Expected Result:** Message "Invalid username or password" displayed.
+
+**Test Data:** Users created during registration tests.
+
+**Test Environment:** Localhost via Docker.
+
+**User Acceptance Testers:** tbd
+
+**Test Results:** To be added.
+
+---
+
+### Feature 3: Add Journal Entry
+
+**Objective:** Ensure authenticated users can create journal entries linked to a trip.
+
+**Test Cases:**
+1. **Add Journal with Comment**
+   - **Input:** Select a trip, enter comment: "It was fun."
+   - **Expected Result:** Journal is saved, displayed under selected trip.
+
+2. **Add Journal with phtot**
+   - **Input:** Comment + photo upload
+   - **Expected Result:** Both comment and image are saved and displayed correctly.
+
+3. **Add Journal Without Photo Upload**
+   - **Input:** Select a trip, write comment, do not upload any photo
+   - **Expected Result:** Journal is saved and displayed under trip, photo field remains empty.
+
+**Test Data:** Trip records pre-seeded.
+
+**Test Environment:** Localhost
+
+**User Acceptance Testers:** tbd
+
+**Test Results:** Results and screenshots will be logged in final report.
+
