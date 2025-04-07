@@ -1,19 +1,82 @@
 <head>
- <title>All Trips Page</title>
+ <title>All Trips</title>
 </head>
 <body>
+  <h1>All Trips</h1>
+  </div> <!--form modal to create trip-->
+  <div class="d-flex justify-content-end mb-4">
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTripModal"><i class="bi bi-plus-circle"></i> Create Trip</button>
+  </div>
+  <div class="modal fade" id="createTripModal" tabindex="-1" aria-labelledby="createTripModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form action="/trips" method="POST" class="needs-validation" novalidate>
+          <div class="modal-header">
+            <h5 class="modal-title" id="createTripModalLabel">Create a New Trip</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label for="trip_name" class="form-label">Trip Name</label>
+              <input
+                type="text"
+                class="form-control"
+                id="trip_name"
+                name="trip_name"
+                required
+              />
+              <div class="invalid-feedback">Please enter a trip name.</div>
+            </div>
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="date_start" class="form-label">Start Date</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  id="date_start"
+                  name="date_start"
+                  required
+                />
+                <div class="invalid-feedback">Please choose a start date.</div>
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="date_end" class="form-label">End Date</label>
+                <input
+                  type="date"
+                  class="form-control"
+                  id="date_end"
+                  name="date_end"
+                  required
+                />
+                <div class="invalid- ">Please choose an end date.</div>
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn btn-success"><i class="bi bi-check-circle"></i> Create Trip</button>
+          </div>
+        </form>
+      </div>
+    </div>
   <div class="container">
-    <h1>All Trips Page</h1>
-    {{#if trips.length}}
-      {{#each trips}}
-        <div class="trip-card">
-          <h2>{{trip_name}}</h2>
-          <p>Start Date: {{date_start}}</p>
-          <p>End Date: {{date_end}}</p>
-          <!-- Include additional trip details as needed -->
-          <button>Select</button>
-        </div>
-      {{/each}}
+     {{#if trips.length}}
+      <div class="row row-cols-1 row-cols-md-2 g-4">
+        {{#each trips}}
+          <div class="col">
+            <div class="card h-100">
+              <div class="card-body">
+                <h5 class="card-title">{{trip_name}}</h5>
+                <p class="card-text">
+                  <strong>Start:</strong> {{date_start}}<br>
+                  <strong>End:</strong> {{date_end}}
+                </p>
+                <a href="/trips/{{trip_id}}" class="btn btn-outline-secondary">Select</a>
+              </div>
+            </div>
+          </div>
+        {{/each}}
+      </div>
     {{else}}
       <p>No trips found. Add a trip.</p>
     {{/if}}
