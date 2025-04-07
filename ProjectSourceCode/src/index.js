@@ -16,20 +16,7 @@ const hbs = handlebars.create({
   layoutsDir: path.join(__dirname, 'views/layouts'),
   partialsDir: path.join(__dirname, 'views/partials'),
   helpers: {
-    // Equality comparison helper
-    eq: function(a, b) {
-      return a === b;
-    },
-    // Date formatting helper
-    formatDate: function(dateString) {
-      if (!dateString) return '';
-      const date = new Date(dateString);
-      return date.toLocaleDateString('en-US', { 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-    }
+    // Add any custom helpers here if needed
   }
 });
 
@@ -61,30 +48,22 @@ app.set('view engine', 'hbs');
 // Set the 'views' directory
 app.set('views', path.join(__dirname, 'views'));
 
-// Middleware
-app.use(fileUpload());
+// Serve static files from resources directory
+app.use('/css', express.static(path.join(__dirname, 'resources/css')));
+app.use('/js', express.static(path.join(__dirname, 'resources/js')));
+app.use('/img', express.static(path.join(__dirname, 'resources/img')));
+
+// Parse request bodies
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
+
+// Set up sessions
 app.use(session({
   secret: process.env.SESSION_SECRET || 'default_secret',
   resave: false,
   saveUninitialized: true,
   cookie: { secure: false } // set to true if using https
 }));
-
-// Serve static files
-app.use('/css', express.static(path.join(__dirname, 'resources/css')));
-app.use('/js', express.static(path.join(__dirname, 'resources/js')));
-app.use('/img', express.static(path.join(__dirname, 'resources/img')));
-
-// Authentication middleware
-const isAuthenticated = (req, res, next) => {
-  if (req.session.user && req.session.user.loggedIn) {
-    next();
-  } else {
-    res.redirect('/login?message=Please log in to access this page');
-  }
-};
 
 // Route for home page - redirects to login
 app.get('/', (req, res) => {
@@ -97,70 +76,66 @@ app.get('/register', (req, res) => {
   res.render('pages/register', { message, title: 'Register' });
 });
 
-// This is a comment to represent a change
-// Another comment
-
 // Process registration form
 app.post('/register', async (req, res) => {
   try {
+    const { username, password, test } = req.body;
+
     console.log('Registration attempt with data:', {
-      username: req.body.username,
-      passwordProvided: !!req.body.password
+      username,
+      passwordProvided: !!password,
+      test
     });
-    
-    const { username, password } = req.body;
-    
+
     // Basic validation
     if (!username || !password) {
       console.log('Missing username or password');
-      return res.redirect('/register?message=Username and password are required');
+      const message = 'Username and password are required';
+      if (test) {
+        return res.status(400).json({ message });
+      } else {
+        return res.status(400).render('pages/register', { message, error: true });
+      }
     }
-    
+
     console.log('Checking if username exists...');
-    
-    // Check if username already exists
-    try {
-      const userCheck = await db.oneOrNone('SELECT username FROM users WHERE username = $1', [username]);
-      console.log('User check result:', userCheck);
-      
-      if (userCheck) {
-        console.log('Username already exists');
-        return res.redirect('/register?message=Username already exists');
+    const userCheck = await db.oneOrNone('SELECT username FROM users WHERE username = $1', [username]);
+
+    if (userCheck) {
+      console.log('Username already exists');
+      const message = 'Username already exists';
+      if (test) {
+        return res.status(409).json({ message });
+      } else {
+        return res.status(409).render('pages/register', { message, error: true });
       }
-    } catch (dbErr) {
-      console.error('Error checking for existing user:', dbErr);
-      return res.redirect('/register?message=Database error. Please try again.');
     }
-    
+
     console.log('Hashing password...');
-    
-    // Hash the password
-    try {
-      const hash = await bcrypt.hash(password, 10);
-      console.log('Password hashed successfully');
-      
-      console.log('Inserting new user...');
-      
-      // Insert the new user
-      try {
-        await db.none('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hash]);
-        console.log('User registered successfully:', username);
-        
-        // Redirect to login page with success message
-        return res.redirect('/login?message=Registration successful. Please log in.');
-      } catch (insertErr) {
-        console.error('Error inserting user into database:', insertErr);
-        return res.redirect('/register?message=Error saving user to database. Please try again.');
-      }
-    } catch (hashErr) {
-      console.error('Error hashing password:', hashErr);
-      return res.redirect('/register?message=Error processing password. Please try again.');
+    const hash = await bcrypt.hash(password, 10);
+    console.log('Password hashed successfully');
+
+    console.log('Inserting new user...');
+    await db.none('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hash]);
+    console.log('User registered successfully:', username);
+
+    if (test) {
+      return res.status(200).json({ message: 'Success' });
+    } else {
+      return res.redirect('/login?message=Registration successful. Please log in.');
     }
+
   } catch (err) {
-    console.error('General registration error:', err);
-    return res.redirect('/register?message=Error registering user. Please try again.');
+    console.error('Registration error:', err);
+    const message = 'Server error. Please try again.';
+    if (req.body.test) {
+      return res.status(500).json({ message });
+    } else {
+      return res.status(500).render('pages/register', { message, error: true });
+    }
   }
 });
+
 
 // Route for login page
 app.get('/login', (req, res) => {
@@ -187,7 +162,7 @@ app.post('/login', async (req, res) => {
       loggedIn: true
     };
     
-    // Redirect to map page
+    // Redirect to events page
     res.redirect('/map');
   } catch (err) {
     console.error('Login error:', err);
@@ -205,11 +180,11 @@ app.get('/logout', (req, res) => {
 // Authentication middleware
 const isAuthenticated = (req, res, next) => {
   if (req.session.user && req.session.user.loggedIn) {
-    next();
-  } else {
-    res.redirect('/login?message=Please log in to access this page');
+    return next();
   }
+  return res.status(401).send('Please log in to access this page');
 };
+
 
 // Route for events page (protected)
 app.get('/events', isAuthenticated, (req, res) => {
@@ -228,56 +203,26 @@ app.get('/calendar', isAuthenticated, (req, res) => {
   });
 });
 
-app.get('/trips', isAuthenticated, async (req, res, next) => {
-  console.log('GET /trips route hit');
-  console.log('username: ', username)
-  try{
+app.get('/trips', isAuthenticated, async (req, res) => {
+  try {
     const username = req.session.user.username;
+
     const trips = await db.any(`
       SELECT t.*
       FROM trips t
       INNER JOIN users_to_trips ut ON t.trip_id = ut.trip_id
       WHERE ut.username = $1
-      `, [username]);
-    
-      console.log('Trips for', username, trips);
-      res.render('pages/trips', {
-        LoggedIn: true,
-        username,
-        title: 'Trips',
-        trips
-      });
-    } catch (err) {
-      next(err);
-    }
-  });
+    `, [username]);
 
-app.post('/trips', isAuthenticated, async (req, res, next) => {
-  const username    = req.session.user.username;
-  console.log('username: ', username);
-  const { trip_name, date_start, date_end } = req.body;
-
-  if (!trip_name || !date_start || !date_end) {
-    return res.status(400).send('Start and end dates are required.');
-  }
-
-  try {
-    // insert into trips, grab the auto‑gen trip_id
-    const { trip_id } = await db.one(`
-    INSERT INTO trips (trip_name, date_start, date_end)
-    VALUES ($1, $2, $3)
-    RETURNING trip_id
-    `, [trip_name, date_start, date_end]);
-
-    await db.none(`
-      INSERT INTO users_to_trips (username, trip_id)
-      VALUES ($1, $2)
-      `, [username, trip_id]);
-
-    // redirect into the “trip details” page
-    res.redirect(`/trips/`);
+    res.render('pages/trips', {
+      LoggedIn: true,
+      username: username,
+      title: 'Trips',
+      trips: trips
+    });
   } catch (err) {
-    next(err);
+    console.error('Error querying trips:', err);
+    res.status(500).send('Server Error');
   }
 });
 
@@ -301,161 +246,6 @@ app.get('/map', isAuthenticated, (req, res) => {
     title: 'Interactive Map',
     mapApiKey: mapApiKey
   });
-});
-
-// Route for calendar page
-app.get('/calendar', isAuthenticated, (req, res) => {
-  // You might want to pass additional data here if needed
-  res.render('pages/calendar', { 
-    LoggedIn: true,
-    username: req.session.user.username,
-    title: 'Calendar'
-  });
-});
-
-// Route for trips page
-app.get('/trips', isAuthenticated, (req, res) => {
-  res.render('pages/trips', { 
-    LoggedIn: true,
-    username: req.session.user.username,
-    title: 'Trips'
-  });
-});
-
-// GET Journal Page
-app.get('/journal', isAuthenticated, async (req, res) => {
-  try {
-    const username = req.session.user.username;
-    const selectedTripId = req.query.tripId || null;
-
-    // Fetch user's trips
-    const trips = await db.any(
-      `SELECT trips.trip_id AS id, city, country, date_start, date_end
-       FROM trips
-       JOIN uses_to_trips ON trips.trip_id = uses_to_trips.trip_id
-       WHERE uses_to_trips.username = $1;`,
-      [username]
-    );
-
-    let journalData = [];
-    if (selectedTripId) {
-      journalData = await db.any(
-        `SELECT 
-          journals.journal_id, 
-          journals.comments, 
-          images.image_id, 
-          images.image_url, 
-          images.image_caption
-         FROM trips
-         JOIN trips_to_events ON trips.trip_id = trips_to_events.trip_id
-         JOIN journals ON trips_to_events.journal_id = journals.journal_id
-         LEFT JOIN journal_to_image ON journals.journal_id = journal_to_image.journal_id
-         LEFT JOIN images ON journal_to_image.image_id = images.image_id
-         WHERE trips.trip_id = $1 AND journals.username = $2;`,
-        [selectedTripId, username]
-      );
-    }
-
-    res.render('pages/journal', { 
-      LoggedIn: true,
-      username,
-      title: 'Journal',
-      trips,
-      selectedTripId,
-      journalData
-    });
-  } catch (err) {
-    console.error('[GET /journal] Error:', err);
-    res.redirect('/login?message=Error loading journal page');
-  }
-});
-
-// Add Journal Entry + Optional Photo
-app.post('/journal/add', isAuthenticated, async (req, res) => {
-  try {
-    const username = req.session.user.username;
-    const { tripId, comment } = req.body;
-    const photo = req.files ? req.files.photo : null;
-
-    // Insert journal
-    const journalResult = await db.one(
-      `INSERT INTO journals (username, comments) VALUES ($1, $2) RETURNING journal_id;`,
-      [username, comment]
-    );
-    const journalId = journalResult.journal_id;
-
-    // Link journal to trip
-    const eventLink = await db.oneOrNone(
-      `SELECT event_id FROM trips_to_events WHERE trip_id = $1 LIMIT 1;`,
-      [tripId]
-    );
-    if (eventLink) {
-      await db.none(
-        `INSERT INTO trips_to_events (trip_id, event_id, journal_id) VALUES ($1, $2, $3);`,
-        [tripId, eventLink.event_id, journalId]
-      );
-    }
-
-    // Handle photo upload
-    if (photo) {
-      const uniqueName = Date.now() + '-' + photo.name.replace(/\s+/g, '_');
-      const uploadPath = path.join(__dirname, 'resources/img/uploads', uniqueName);
-      await photo.mv(uploadPath);
-
-      const imageResult = await db.one(
-        `INSERT INTO images (image_url, image_caption) VALUES ($1, $2) RETURNING image_id;`,
-        [`/img/uploads/${uniqueName}`, photo.name]
-      );
-      await db.none(
-        `INSERT INTO journal_to_image (journal_id, image_id) VALUES ($1, $2);`,
-        [journalId, imageResult.image_id]
-      );
-    }
-
-    res.redirect(`/journal?tripId=${tripId}&message=Journal entry added`);
-  } catch (err) {
-    console.error('[POST /journal/add] Error:', err);
-    res.redirect('/journal?message=Error adding journal');
-  }
-});
-
-// Delete Journal Entry + Photo
-app.post('/journal/delete', isAuthenticated, async (req, res) => {
-  try {
-    const { journalId, tripId } = req.body;
-
-    // Delete photo links
-    await db.none(`DELETE FROM journal_to_image WHERE journal_id = $1;`, [journalId]);
-
-    // Delete from trips_to_events
-    await db.none(`DELETE FROM trips_to_events WHERE journal_id = $1;`, [journalId]);
-
-    // Delete journal
-    await db.none(`DELETE FROM journals WHERE journal_id = $1;`, [journalId]);
-
-    res.redirect(`/journal?tripId=${tripId}&message=Journal deleted`);
-  } catch (err) {
-    console.error('[POST /journal/delete] Error:', err);
-    res.redirect('/journal?message=Error deleting journal');
-  }
-});
-
-// Edit Journal Entry
-app.post('/journal/edit', isAuthenticated, async (req, res) => {
-  try {
-    const { journalId, tripId, comment } = req.body;
-    console.log(`[POST /journal/edit] Editing journal ${journalId}`);
-
-    await db.none(
-      `UPDATE journals SET comments = $1 WHERE journal_id = $2;`,
-      [comment, journalId]
-    );
-
-    res.redirect(`/journal?tripId=${tripId}&message=Journal updated successfully`);
-  } catch (err) {
-    console.error('[POST /journal/edit] Error:', err);
-    res.redirect('/journal?message=Error editing journal');
-  }
 });
 
 // API ROUTES FOR TRAVEL DATA
@@ -580,7 +370,7 @@ app.delete('/api/trips/:id', isAuthenticated, async (req, res) => {
     
     // Verify trip belongs to user
     const trip = await db.oneOrNone(
-      'SELECT * FROM uses_to_trips WHERE trip_id = $1 AND username = $2',
+      'SELECT * FROM users_to_trips WHERE trip_id = $1 AND username = $2',
       [id, username]
     );
     
@@ -610,9 +400,9 @@ app.get('/api/events', isAuthenticated, async (req, res) => {
       FROM events e
       JOIN trips_to_events te ON e.event_id = te.event_id
       JOIN trips t ON te.trip_id = t.trip_id
-      JOIN uses_to_trips ut ON t.trip_id = ut.trip_id
-      WHERE ut.username = $1
-    `, [username]);
+      JOIN users_to_trips ut ON t.trip_id = ut.trip_id
+      WHERE ut.username = $1`
+    , [username]);
     
     res.json(events.map(event => ({
       id: event.event_id,
@@ -638,7 +428,7 @@ app.post('/api/events', isAuthenticated, async (req, res) => {
     
     // Verify trip belongs to user
     const trip = await db.oneOrNone(
-      'SELECT * FROM uses_to_trips WHERE trip_id = $1 AND username = $2',
+      'SELECT * FROM users_to_trips WHERE trip_id = $1 AND username = $2',
       [tripId, username]
     );
     
@@ -690,14 +480,14 @@ app.delete('/api/events/:id', isAuthenticated, async (req, res) => {
     const username = req.session.user.username;
     
     // Verify event belongs to user's trip
-    const event = await db.oneOrNone(`
-      SELECT e.event_id
+    const event = await db.oneOrNone(
+      `SELECT e.event_id
       FROM events e
       JOIN trips_to_events te ON e.event_id = te.event_id
       JOIN trips t ON te.trip_id = t.trip_id
-      JOIN uses_to_trips ut ON t.trip_id = ut.trip_id
-      WHERE e.event_id = $1 AND ut.username = $2
-    `, [id, username]);
+      JOIN users_to_trips ut ON t.trip_id = ut.trip_id
+      WHERE e.event_id = $1 AND ut.username = $2`
+    , [id, username]);
     
     if (!event) {
       return res.status(404).json({ error: 'Event not found or unauthorized' });
@@ -719,13 +509,13 @@ app.get('/api/journals', isAuthenticated, async (req, res) => {
   try {
     const username = req.session.user.username;
     
-    const journals = await db.any(`
-      SELECT j.journal_id, j.comments, e.event_id, e.activity
+    const journals = await db.any(
+      `SELECT j.journal_id, j.comments, e.event_id, e.activity
       FROM journals j
       JOIN events_to_journals ej ON j.journal_id = ej.journal_id
       JOIN events e ON ej.event_id = e.event_id
-      WHERE j.username = $1
-    `, [username]);
+      WHERE j.username = $1`
+    , [username]);
     
     res.json(journals.map(journal => ({
       id: journal.journal_id,
@@ -746,14 +536,14 @@ app.post('/api/journals', isAuthenticated, async (req, res) => {
     const username = req.session.user.username;
     
     // Verify event belongs to user's trip
-    const event = await db.oneOrNone(`
-      SELECT e.event_id, e.activity
+    const event = await db.oneOrNone(
+      `SELECT e.event_id, e.activity
       FROM events e
       JOIN trips_to_events te ON e.event_id = te.event_id
       JOIN trips t ON te.trip_id = t.trip_id
-      JOIN uses_to_trips ut ON t.trip_id = ut.trip_id
-      WHERE e.event_id = $1 AND ut.username = $2
-    `, [eventId, username]);
+      JOIN users_to_trips ut ON t.trip_id = ut.trip_id
+      WHERE e.event_id = $1 AND ut.username = $2`
+    , [eventId, username]);
     
     if (!event) {
       return res.status(404).json({ error: 'Event not found or unauthorized' });
@@ -812,12 +602,145 @@ app.delete('/api/journals/:id', isAuthenticated, async (req, res) => {
   }
 });
 
-//####################################### TESTS CODE FOR LAB #######################################
-app.get('/welcome', (req, res) => {
-  res.json({status: 'success', message: 'Welcome!'});
+// GET Journal Page
+app.get('/journal', isAuthenticated, async (req, res) => {
+  try {
+    const username = req.session.user.username;
+    const selectedTripId = req.query.tripId || null;
+
+    // Fetch user's trips
+    const trips = await db.any(
+      `SELECT trips.trip_id AS id, city, country, date_start, date_end
+       FROM trips
+       JOIN users_to_trips ON trips.trip_id = users_to_trips.trip_id
+       WHERE users_to_trips.username = $1`,
+      [username]
+    );
+
+    let journalData = [];
+    if (selectedTripId) {
+      journalData = await db.any(
+        `SELECT 
+          journals.journal_id, 
+          journals.comments, 
+          images.image_id, 
+          images.image_url, 
+          images.image_caption
+         FROM trips
+         JOIN trips_to_events ON trips.trip_id = trips_to_events.trip_id
+         JOIN journals ON trips_to_events.journal_id = journals.journal_id
+         LEFT JOIN journal_to_image ON journals.journal_id = journal_to_image.journal_id
+         LEFT JOIN images ON journal_to_image.image_id = images.image_id
+         WHERE trips.trip_id = $1 AND journals.username = $2`,
+        [selectedTripId, username]
+      );
+    }
+
+    res.render('pages/journal', { 
+      LoggedIn: true,
+      username,
+      title: 'Journal',
+      trips,
+      selectedTripId,
+      journalData
+    });
+  } catch (err) {
+    console.error('[GET /journal] Error:', err);
+    res.redirect('/login?message=Error loading journal page');
+  }
 });
 
-// Start the server
+// Add Journal Entry + Optional Photo
+app.post('/journal/add', isAuthenticated, async (req, res) => {
+  try {
+    const username = req.session.user.username;
+    const { tripId, comment } = req.body;
+    const photo = req.files ? req.files.photo : null;
+
+    // Insert journal
+    const journalResult = await db.one(
+      `INSERT INTO journals (username, comments) VALUES ($1, $2) RETURNING journal_id`,
+      [username, comment]
+    );
+    const journalId = journalResult.journal_id;
+
+    // Link journal to trip
+    const eventLink = await db.oneOrNone(
+      `SELECT event_id FROM trips_to_events WHERE trip_id = $1 LIMIT 1`,
+      [tripId]
+    );
+    if (eventLink) {
+      await db.none(
+        `INSERT INTO trips_to_events (trip_id, event_id, journal_id) VALUES ($1, $2, $3)`,
+        [tripId, eventLink.event_id, journalId]
+      );
+    }
+
+    // Handle photo upload
+    if (photo) {
+      const uniqueName = Date.now() + '-' + photo.name.replace(/\s+/g, '_');
+      const uploadPath = path.join(__dirname, 'resources/img/uploads', uniqueName);
+      await photo.mv(uploadPath);
+
+      const imageResult = await db.one(
+        `INSERT INTO images (image_url, image_caption) VALUES ($1, $2) RETURNING image_id`,
+        [`/img/uploads/${uniqueName}`, photo.name]
+      );
+      await db.none(
+        `INSERT INTO journal_to_image (journal_id, image_id) VALUES ($1, $2)`,
+        [journalId, imageResult.image_id]
+      );
+    }
+
+    res.redirect(`/journal?tripId=${tripId}&message=Journal entry added`);
+  } catch (err) {
+    console.error('[POST /journal/add] Error:', err);
+    res.redirect('/journal?message=Error adding journal');
+  }
+});
+
+// Delete Journal Entry + Photo
+app.post('/journal/delete', isAuthenticated, async (req, res) => {
+  try {
+    const { journalId, tripId } = req.body;
+
+    await db.none(`DELETE FROM journal_to_image WHERE journal_id = $1`, [journalId]);
+    await db.none(`DELETE FROM trips_to_events WHERE journal_id = $1`, [journalId]);
+    await db.none(`DELETE FROM journals WHERE journal_id = $1`, [journalId]);
+
+    res.redirect(`/journal?tripId=${tripId}&message=Journal deleted`);
+  } catch (err) {
+    console.error('[POST /journal/delete] Error:', err);
+    res.redirect('/journal?message=Error deleting journal');
+  }
+});
+
+// Edit Journal Entry
+app.post('/journal/edit', isAuthenticated, async (req, res) => {
+  try {
+    const { journalId, tripId, comment } = req.body;
+    console.log(`[POST /journal/edit] Editing journal ${journalId}`);
+
+    await db.none(
+      `UPDATE journals SET comments = $1 WHERE journal_id = $2`,
+      [comment, journalId]
+    );
+
+    res.redirect(`/journal?tripId=${tripId}&message=Journal updated successfully`);
+  } catch (err) {
+    console.error('[POST /journal/edit] Error:', err);
+    res.redirect('/journal?message=Error editing journal');
+  }
+});
+
+// Test welcome route
+app.get('/welcome', (req, res) => {
+  res.json({ status: 'success', message: 'Welcome!' });
+});
+
+// Start server
 const PORT = process.env.PORT || 3000;
-module.exports = app.listen(3000);
-console.log(`Server running on http://localhost:${PORT}`);
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
+}
+module.exports = app;
