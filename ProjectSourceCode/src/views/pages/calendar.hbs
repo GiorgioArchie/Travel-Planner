@@ -1,11 +1,65 @@
-<div class="calendar-container">
-  <h2>{{title}}</h2>
-  <iframe 
-    src="{{googleCalendarURL}}" 
-    style="border: 0" 
-    width="800" 
-    height="600" 
-    frameborder="0" 
-    scrolling="no">
-  </iframe>
-</div>
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>TOAST UI Calendar</title>
+    <!-- 1) Toast UI Calendar CSS from CDN -->
+    <link
+      rel="stylesheet"
+      href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css"
+    />
+  </head>
+  <body>
+    <h1>TOAST UI Calendar</h1>
+    <!-- 2) Container for the calendar -->
+    <div id="calendar" style="height: 600px;"></div>
+
+    <!-- 3) Toast UI Calendar JS from CDN -->
+    <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script>
+
+    <!-- 4) [OPTIONAL] Disable collecting hostname for Google Analytics -->
+    <script>
+      if (tui && tui.Calendar) {
+        tui.Calendar.sendHostname = function() {
+          /* no-op: Disables GA tracking in toast-ui-calendar */
+        };
+      }
+    </script>
+
+    <!-- 5) Inline script to initialize the calendar -->
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const container = document.getElementById('calendar');
+        const options = {
+          defaultView: 'week',
+          timezone: {
+            zones: [
+              { timezoneName: 'Asia/Seoul', displayLabel: 'Seoul' },
+              { timezoneName: 'Europe/London', displayLabel: 'London' },
+            ],
+          },
+          calendars: [
+            {
+              id: 'cal1',
+              name: 'Personal',
+              backgroundColor: '#03bd9e',
+            },
+            {
+              id: 'cal2',
+              name: 'Work',
+              backgroundColor: '#00a9ff',
+            },
+          ],
+        };
+
+        // Create the calendar instance
+        const calendar = new tui.Calendar(container, options);
+
+        // Example: Listen for events if desired
+        // calendar.on('beforeCreateSchedule', (event) => {
+        //   console.log('Creating new schedule:', event);
+        // });
+      });
+    </script>
+  </body>
+</html>
