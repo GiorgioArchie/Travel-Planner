@@ -551,23 +551,59 @@ function saveData() {
 }
 
 // Load data from server and localStorage as backup
+// Replace the loadData function in map.js with this improved version
 function loadData() {
+  console.log("Loading data from server...");
+  
+  // Clear existing data first
+  destinations.length = 0;
+  trips.length = 0;
+  
+  // Clear existing markers
+  markers.forEach(marker => marker.setMap(null));
+  markers.length = 0;
+  
+  // Clear UI lists
+  const destinationsList = document.getElementById("destinationsList");
+  const tripsList = document.getElementById("tripsList");
+  
+  if (destinationsList) {
+    destinationsList.innerHTML = '';
+  }
+  
+  if (tripsList) {
+    tripsList.innerHTML = '';
+  }
+  
   // First try to load from server
   Promise.all([
-    fetch('/api/destinations').then(res => res.ok ? res.json() : []).catch(() => []),
-    fetch('/api/trips').then(res => res.ok ? res.json() : []).catch(() => [])
+    fetch('/api/destinations').then(res => {
+      if (!res.ok) {
+        throw new Error(`Failed to fetch destinations: ${res.status}`);
+      }
+      return res.json();
+    }),
+    fetch('/api/trips').then(res => {
+      if (!res.ok) {
+        throw new Error(`Failed to fetch trips: ${res.status}`);
+      }
+      return res.json();
+    })
   ])
   .then(([serverDestinations, serverTrips]) => {
+    console.log("Server destinations:", serverDestinations);
+    console.log("Server trips:", serverTrips);
+    
     // If we got data from the server, use it
-    if (serverDestinations.length > 0) {
+    if (serverDestinations && serverDestinations.length > 0) {
       serverDestinations.forEach(destination => {
         // Format destination for client-side use
         const dest = {
           id: destination.id,
           city: destination.city,
           country: destination.country,
-          lat: destination.latitude,
-          lng: destination.longitude
+          lat: destination.latitude || parseFloat(destination.latitude),
+          lng: destination.longitude || parseFloat(destination.longitude)
         };
         
         destinations.push(dest);
@@ -576,10 +612,18 @@ function loadData() {
       });
     }
     
-    if (serverTrips.length > 0) {
+    if (serverTrips && serverTrips.length > 0) {
       serverTrips.forEach(trip => {
-        trips.push(trip);
-        addTripToList(trip);
+        const formattedTrip = {
+          id: trip.id || trip.trip_id,
+          destinationId: trip.destinationId,
+          destination: trip.destination || `${trip.city}, ${trip.country}`,
+          startDate: trip.startDate || trip.date_start,
+          endDate: trip.endDate || trip.date_end
+        };
+        
+        trips.push(formattedTrip);
+        addTripToList(formattedTrip);
       });
     }
     
@@ -589,7 +633,10 @@ function loadData() {
     // Update info windows
     updateAllMarkerInfoWindows();
     
-    console.log("Data loaded from server");
+    console.log("Data loaded from server successfully");
+    
+    // Save to localStorage as backup
+    saveData();
   })
   .catch(error => {
     console.error("Error loading data from server:", error);
