@@ -3,7 +3,31 @@
 </head>
 <body>
   <h1>All Trips</h1>
-  </div> <!--form modal to create trip-->
+  <div class="container">
+     {{#if trips.length}}
+      <div class="row row-cols-1 row-cols-md-2 g-4">
+        {{#each trips}}
+          <div class="col">
+            <div class="card h-100">
+              <div class="card-body">
+                <h5 class="card-title">{{trip_name}}</h5>
+                <p class="card-text">
+                  <strong>Start:</strong> {{date_start}}<br>
+                  <strong>End:</strong> {{date_end}}
+                </p>
+                <a href="/trips/{{trip_id}}" class="btn btn-outline-secondary">Select</a>
+              </div>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    {{else}}
+      <p>No trips found. Add a trip.</p>
+    {{/if}}
+    <footer>
+      <p>*Map Photo as Background*</p>
+    </footer>
+  </div>
   <div class="d-flex justify-content-end mb-4">
     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTripModal"><i class="bi bi-plus-circle"></i> Create Trip</button>
   </div>
@@ -59,29 +83,4 @@
         </form>
       </div>
     </div>
-  <div class="container">
-     {{#if trips.length}}
-      <div class="row row-cols-1 row-cols-md-2 g-4">
-        {{#each trips}}
-          <div class="col">
-            <div class="card h-100">
-              <div class="card-body">
-                <h5 class="card-title">{{trip_name}}</h5>
-                <p class="card-text">
-                  <strong>Start:</strong> {{date_start}}<br>
-                  <strong>End:</strong> {{date_end}}
-                </p>
-                <a href="/trips/{{trip_id}}" class="btn btn-outline-secondary">Select</a>
-              </div>
-            </div>
-          </div>
-        {{/each}}
-      </div>
-    {{else}}
-      <p>No trips found. Add a trip.</p>
-    {{/if}}
-    <footer>
-      <p>*Map Photo as Background*</p>
-    </footer>
-  </div>
 </body>
