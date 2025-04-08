@@ -733,6 +733,24 @@ app.post('/journal/edit', isAuthenticated, async (req, res) => {
   }
 });
 
+
+
+////////////////////////////////////////////////////
+// ADD THIS CALENDAR ROUTE TO YOUR EXISTING index.js
+////////////////////////////////////////////////////
+// 2) Define a route for "/calendar" that renders "calendar.hbs"
+app.get('/calendar', (req, res) => {
+  res.render('pages/calendar');
+});
+
+// 3) (Optional) Root route => redirect to "/calendar"
+app.get('/', (req, res) => {
+  res.redirect('/calendar');
+});
+
+//###############################################################################//
+
+
 // Test welcome route
 app.get('/welcome', (req, res) => {
   res.json({ status: 'success', message: 'Welcome!' });
