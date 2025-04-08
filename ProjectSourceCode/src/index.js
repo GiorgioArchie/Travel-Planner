@@ -54,12 +54,6 @@ app.use('/js', express.static(path.join(__dirname, 'resources/js')));
 app.use('/img', express.static(path.join(__dirname, 'resources/img')));
 
 // Parse request bodies
-// Serve static files from resources directory
-app.use('/css', express.static(path.join(__dirname, 'resources/css')));
-app.use('/js', express.static(path.join(__dirname, 'resources/js')));
-app.use('/img', express.static(path.join(__dirname, 'resources/img')));
-
-// Parse request bodies
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -117,32 +111,9 @@ app.post('/register', async (req, res) => {
       } else {
         return res.status(409).render('pages/register', { message, error: true });
       }
-    const userCheck = await db.oneOrNone('SELECT username FROM users WHERE username = $1', [username]);
-
-    if (userCheck) {
-      console.log('Username already exists');
-      const message = 'Username already exists';
-      if (test) {
-        return res.status(409).json({ message });
-      } else {
-        return res.status(409).render('pages/register', { message, error: true });
-      }
     }
 
-
-console.log('Hashing password...');
-const hash = await bcrypt.hash(password, 10);
-console.log('Password hashed successfully');
-
-console.log('Inserting new user...');
-await db.none('INSERT INTO users (username, password) VALUES ($1, $2)', [username, hash]);
-console.log('User registered successfully:', username);
-
-if (test) {
-return res.status(200).json({ message: 'Success' });
-} else {
-return res.redirect('/login?message=Registration successful. Please log in.');
-}
+    console.log('Hashing password...');
 
     const hash = await bcrypt.hash(password, 10);
     console.log('Password hashed successfully');
@@ -165,17 +136,8 @@ return res.redirect('/login?message=Registration successful. Please log in.');
     } else {
       return res.status(500).render('pages/register', { message, error: true });
     }
-    console.error('Registration error:', err);
-    const message = 'Server error. Please try again.';
-    if (req.body.test) {
-      return res.status(500).json({ message });
-    } else {
-      return res.status(500).render('pages/register', { message, error: true });
-    }
   }
 });
-
-
 
 // Route for login page
 app.get('/login', (req, res) => {
@@ -221,7 +183,6 @@ const isAuthenticated = (req, res, next) => {
   return res.status(401).send('Please log in to access this page');
 };
 
-
 // Route for events page (protected)
 app.get('/events', isAuthenticated, (req, res) => {
 res.render('pages/events', {
@@ -262,6 +223,34 @@ app.get('/trips', isAuthenticated, async (req, res) => {
   }
 });
 
+app.post('/trips', isAuthenticated, async (req, res, next) => {
+  const username    = req.session.user.username;
+  console.log('username: ', username);
+  const { trip_name, date_start, date_end } = req.body;
+
+  if (!trip_name || !date_start || !date_end) {
+    return res.status(400).send('Start and end dates are required.');
+  }
+
+  try {
+    // insert into trips, grab the auto‑gen trip_id
+    const { trip_id } = await db.one(`
+    INSERT INTO trips (trip_name, date_start, date_end)
+    VALUES ($1, $2, $3)
+    RETURNING trip_id
+    `, [trip_name, date_start, date_end]);
+
+    await db.none(`
+      INSERT INTO users_to_trips (username, trip_id)
+      VALUES ($1, $2)
+      `, [username, trip_id]);
+
+    // redirect into the “trip details” page
+    res.redirect(`/trips/`);
+  } catch (err) {
+    next(err);
+  }
+});
 
 app.get('/journal', isAuthenticated, (req, res) => {
 res.render('pages/journal', {
