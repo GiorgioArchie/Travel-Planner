@@ -1,9 +1,8 @@
 **User Acceptance Test Plan**
 
 **Project Name:** Travel Planner
-**Team Name:** [Your Team Name Here]  
-**Test Document Location:** /milestones/UAT_Plan.md  
-**Test Environment:** Localhost (`http://localhost:3000`) using Docker Compose setup
+**Team Name:** Team Travel  
+**Test Environment: Localhost (`http://localhost:3000`) using Docker Compose setup
 
 ---
 
@@ -32,30 +31,39 @@
 
 ---
 
-### Feature 2: User Login
+### Feature 2: Add Trip
 
-**Objective:** Confirm that users can log in with valid credentials and are rejected with invalid ones.
+**Objective:** Users can create new trips from both the home/trips page and the all trips page, and that the trip data is saved and displayed correctly.
 
 **Test Cases:**
-1. **Successful Login**
-   - **Input:** username: `user01`, password: `password01`
-   - **Expected Result:** Redirect to `/map` page, session created.
 
-2. **Incorrect Password**
-   - **Input:** username: `user01`, password: `wrongpassword`
-   - **Expected Result:** Message "Invalid username or password" displayed.
+1. **Add Trip from Home/Trips Page**
+   - **Input:** On home page, user fills in trip name: `Spring Break`, start date: `2025-03-15`, end date: `2025-03-22`, destination: `Miami`, and clicks "Add Trip"
+   - **Expected Result:** 
+     - Trip is saved in the database
+     - Trip appears on the All Trips page
+     - No previous trips are removed or overwritten
 
-3. **Nonexistent User**
-   - **Input:** username: `no_user`, password: `no_password`
-   - **Expected Result:** Message "Invalid username or password" displayed.
+2. **Add Trip from All Trips Page**
+   - **Input:** On All Trips page, user enters trip name: `Summer Road Trip`, start date: `2025-06-10`, end date: `2025-03-22, destination: `California`, and submits the form
+   - **Expected Result:** 
+     - Trip is saved and shown on the All Trips page
+     - Previously saved trips (Spring Break) still appear
+     - Trip is visible when returning to the home page
 
-**Test Data:** Users created during registration tests.
+3. **Verify Persistence of Multiple Trips**
+   - **Input:** After adding multiple trips from both pages, refresh the All Trips page
+   - **Expected Result:**
+     - All created trips are listed correctly
+     - No data is lost between page reloads or navigation
 
-**Test Environment:** Localhost via Docker.
+**Test Data:** Trip entries with varying names, dates, and destinations added through both home and all trips pages.
+
+**Test Environment:** Localhost using Docker Compose
 
 **User Acceptance Testers:** tbd
 
-**Test Results:** To be added.
+**Test Results:** To be recorded during execution week (screenshots and confirmations)
 
 ---
 
