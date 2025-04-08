@@ -320,7 +320,7 @@ app.get('/api/trips', isAuthenticated, async (req, res) => {
     const trips = await db.any(`
       SELECT t.trip_id, t.date_start, t.date_end, t.city, t.country, d.id as destination_id
       FROM trips t
-      JOIN uses_to_trips u ON t.trip_id = u.trip_id
+      JOIN users_to_trips u ON t.trip_id = u.trip_id
       LEFT JOIN destinations d ON t.city = d.city AND t.country = d.country
       WHERE username = $1
     `, [username]);
@@ -402,7 +402,7 @@ app.delete('/api/trips/:id', isAuthenticated, async (req, res) => {
   }
 });
 
-// Events API
+/*// Events API
 // Get all events for the current user
 app.get('/api/events', isAuthenticated, async (req, res) => {
   try {
@@ -516,105 +516,7 @@ app.delete('/api/events/:id', isAuthenticated, async (req, res) => {
     res.status(500).json({ error: 'Failed to delete event' });
   }
 });
-
-// Journal API
-// Get all journal entries for the current user
-app.get('/api/journals', isAuthenticated, async (req, res) => {
-  try {
-    const username = req.session.user.username;
-    
-    const journals = await db.any(
-      `SELECT j.journal_id, j.comments, e.event_id, e.activity
-      FROM journals j
-      JOIN events_to_journals ej ON j.journal_id = ej.journal_id
-      JOIN events e ON ej.event_id = e.event_id
-      WHERE j.username = $1`
-    , [username]);
-    
-    res.json(journals.map(journal => ({
-      id: journal.journal_id,
-      eventId: journal.event_id,
-      event: journal.activity,
-      comments: journal.comments
-    })));
-  } catch (err) {
-    console.error('Error fetching journal entries:', err);
-    res.status(500).json({ error: 'Failed to fetch journal entries' });
-  }
-});
-
-// Create a new journal entry
-app.post('/api/journals', isAuthenticated, async (req, res) => {
-  try {
-    const { eventId, comments } = req.body;
-    const username = req.session.user.username;
-    
-    // Verify event belongs to user's trip
-    const event = await db.oneOrNone(
-      `SELECT e.event_id, e.activity
-      FROM events e
-      JOIN trips_to_events te ON e.event_id = te.event_id
-      JOIN trips t ON te.trip_id = t.trip_id
-      JOIN users_to_trips ut ON t.trip_id = ut.trip_id
-      WHERE e.event_id = $1 AND ut.username = $2`
-    , [eventId, username]);
-    
-    if (!event) {
-      return res.status(404).json({ error: 'Event not found or unauthorized' });
-    }
-    
-    // Start a transaction
-    await db.tx(async t => {
-      // Insert journal entry
-      const journalResult = await t.one(
-        'INSERT INTO journals (username, comments) VALUES ($1, $2) RETURNING journal_id',
-        [username, comments]
-      );
-      
-      // Link journal to event
-      await t.none(
-        'INSERT INTO events_to_journals (event_id, journal_id) VALUES ($1, $2)',
-        [eventId, journalResult.journal_id]
-      );
-      
-      res.status(201).json({
-        id: journalResult.journal_id,
-        eventId,
-        event: event.activity,
-        comments
-      });
-    });
-  } catch (err) {
-    console.error('Error creating journal entry:', err);
-    res.status(500).json({ error: 'Failed to create journal entry' });
-  }
-});
-
-// Delete a journal entry
-app.delete('/api/journals/:id', isAuthenticated, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const username = req.session.user.username;
-    
-    // Verify journal belongs to user
-    const journal = await db.oneOrNone(
-      'SELECT * FROM journals WHERE journal_id = $1 AND username = $2',
-      [id, username]
-    );
-    
-    if (!journal) {
-      return res.status(404).json({ error: 'Journal entry not found or unauthorized' });
-    }
-    
-    // Delete journal entry (cascading will handle related records)
-    await db.none('DELETE FROM journals WHERE journal_id = $1', [id]);
-    
-    res.status(200).json({ message: 'Journal entry deleted successfully' });
-  } catch (err) {
-    console.error('Error deleting journal entry:', err);
-    res.status(500).json({ error: 'Failed to delete journal entry' });
-  }
-});
+*/
 
 // GET Journal Page
 app.get('/journal', isAuthenticated, async (req, res) => {
@@ -670,6 +572,10 @@ app.post('/journal/add', isAuthenticated, async (req, res) => {
     const username = req.session.user.username;
     const { tripId, comment } = req.body;
     const photo = req.files ? req.files.photo : null;
+
+    if (!comment && !photo) {
+      return res.redirect(`/journal?tripId=${tripId}&message=Please provide a comment or photo`);
+    }
 
     // Insert journal
     const journalResult = await db.one(
