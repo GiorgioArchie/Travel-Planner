@@ -67,7 +67,11 @@ app.use(session({
 
 // Route for home page - redirects to login
 app.get('/', (req, res) => {
-  res.redirect('/login');
+  if (req.session.user && req.session.user.loggedIn) {
+    res.redirect('/map');
+  } else {
+    res.redirect('/login');
+  }
 });
 
 // Route for registration page
@@ -255,10 +259,37 @@ app.get('/map', isAuthenticated, (req, res) => {
 app.get('/api/destinations', isAuthenticated, async (req, res) => {
   try {
     const destinations = await db.any('SELECT * FROM destinations');
+    console.log('Destinations fetched from database:', destinations);
     res.json(destinations);
   } catch (err) {
     console.error('Error fetching destinations:', err);
     res.status(500).json({ error: 'Failed to fetch destinations' });
+  }
+});
+
+app.post('/api/destinations', isAuthenticated, async (req, res) => {
+  try {
+    const { city, country, latitude, longitude } = req.body;
+    console.log('Creating destination:', { city, country, latitude, longitude });
+    
+    // Create destination
+    const result = await db.one(
+      'INSERT INTO destinations (city, country, latitude, longitude) VALUES ($1, $2, $3, $4) RETURNING id', 
+      [city, country, latitude, longitude]
+    );
+    
+    console.log('Destination created with ID:', result.id);
+    
+    res.status(201).json({
+      id: result.id,
+      city,
+      country,
+      latitude,
+      longitude
+    });
+  } catch (err) {
+    console.error('Error creating destination:', err);
+    res.status(500).json({ error: 'Failed to create destination' });
   }
 });
 
@@ -329,10 +360,15 @@ app.get('/api/trips', isAuthenticated, async (req, res) => {
 });
 
 // Create a new trip
+// Replace the current trips API post route in index.js with this fixed version
+
+// Create a new trip
 app.post('/api/trips', isAuthenticated, async (req, res) => {
   try {
     const { destinationId, startDate, endDate, city, country } = req.body;
     const username = req.session.user.username;
+    
+    console.log('Creating trip:', { destinationId, startDate, endDate, city, country });
     
     // Start a transaction
     await db.tx(async t => {
@@ -342,11 +378,15 @@ app.post('/api/trips', isAuthenticated, async (req, res) => {
         [startDate, endDate, city, country]
       );
       
-      // Link user to trip
+      console.log('Trip created with ID:', tripResult.trip_id);
+      
+      // Link user to trip - FIXED TABLE NAME FROM uses_to_trips TO users_to_trips
       await t.none(
-        'INSERT INTO uses_to_trips (username, trip_id) VALUES ($1, $2)',
+        'INSERT INTO users_to_trips (username, trip_id) VALUES ($1, $2)',
         [username, tripResult.trip_id]
       );
+      
+      console.log('User linked to trip successfully');
       
       res.status(201).json({
         id: tripResult.trip_id,

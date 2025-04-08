@@ -154,14 +154,59 @@
   <!-- Custom map JavaScript -->
   <script src="/js/map.js"></script>
   
-  <!-- Custom script to handle create trip redirect -->
+  <!-- Custom script to properly handle trip creation -->
   <script>
     document.addEventListener('DOMContentLoaded', function() {
       const tripForm = document.getElementById('addTripForm');
       if (tripForm) {
         tripForm.addEventListener('submit', function(e) {
           e.preventDefault();
-          window.location.href = '/calendar';
+          
+          // Get form values
+          const tripName = document.getElementById('tripName').value;
+          const destinationId = document.getElementById('tripDestination').value;
+          const startDate = document.getElementById('tripStartDate').value;
+          const endDate = document.getElementById('tripEndDate').value;
+          
+          // Find the destination to get city and country
+          const destination = destinations.find(d => d.id == destinationId);
+          
+          if (!destination) {
+            alert("Please select a valid destination");
+            return;
+          }
+          
+          // Create trip data object
+          const tripData = {
+            destinationId: parseInt(destinationId),
+            startDate: startDate,
+            endDate: endDate,
+            city: destination.city,
+            country: destination.country
+          };
+          
+          // Save trip to database
+          fetch('/api/trips', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(tripData)
+          })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error('Network response was not ok');
+            }
+            return response.json();
+          })
+          .then(savedTrip => {
+            // After successfully saving the trip, redirect to calendar
+            window.location.href = '/calendar';
+          })
+          .catch(error => {
+            console.error('Error saving trip:', error);
+            alert('There was an error saving your trip. Please try again.');
+          });
         });
       }
     });
