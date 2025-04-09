@@ -25,7 +25,7 @@
 
 **Test Data:** See `/docker-entrypoint-initdb.d/create.sql` and manual form input.
 
-**User Acceptance Testers:** tbd
+**User Acceptance Testers:** Gathering students from our other classes to test out our application, results tbd
 
 **Test Results:** To be recorded during execution week.
 
@@ -57,11 +57,11 @@
      - All created trips are listed correctly
      - No data is lost between page reloads or navigation
 
-**Test Data:** Trip entries with varying names, dates, and destinations added through both home and all trips pages.
+**Test Data:** Trip entries with varying names, dates, and destinations added through both home and all trips pages and added into trips table in travel_planner db.
 
 **Test Environment:** Localhost using Docker Compose
 
-**User Acceptance Testers:** tbd
+**User Acceptance Testers:** Gathering students from our other classes to test out our application, results tbd
 
 **Test Results:** To be recorded during execution week (screenshots and confirmations)
 
@@ -84,44 +84,10 @@
    - **Input:** Select a trip, write comment, do not upload any photo
    - **Expected Result:** Journal is saved and displayed under trip, photo field remains empty.
 
-**Test Data:** Trip records pre-seeded.
+**Test Data:** Trip records pre-seeded.  Journal comment added into journals table and journal_to_image table and images added to the join table and images table
 
 **Test Environment:** Localhost
 
-**User Acceptance Testers:** tbd
+**User Acceptance Testers:** Gathering students from our other classes to test out our application, results tbd
 
 **Test Results:** Results and screenshots will be logged in final report.
-
-### Feature 4: View Trip on a Calendar page
-
-**Objective:** Ensure authenticated users can navigate to Calendar page which links to all the users trips.
-
-**Test Cases:**
-1. **Display Trip on calendar**
-   - **Input:** On home page, user fills in trip name: `Spring Break`, start date: `2025-03-15`, end date: `2025-03-22`, destination: `Miami`, and clicks "Add Trip"
-   - **Expected Result:** 
-     - Trip is saved in the database
-     - User is redirected to Calendar page to view their trip
-     - No previous trips are removed or overwritten but are displayed on the calendar
-
-2. **Add Event to the trip**
-   - **Input:** On calendar page, user enters event name: `First Drive`, start time: `0800`, end time: `2000 (8pm)`, city: `Boulder`, country: `USA`, activity: `driving to Moab`, description:`taking I-70` and submits the event form
-   - **Expected Result:** 
-     - Event is saved and shown on the Calendar page
-     - Previously saved events and trips still appear
-     - Trip/Events are visible when returning to the home page
-
-3. **Verify Persistence of Multiple Trips/Events**
-   - **Input:** After adding multiple trips and Events, refresh the Calendar page
-   - **Expected Result:**
-     - All created trips and events are listed correctly
-     - No data is lost between page reloads or navigation
-
-**Test Data:** Trip and Event records pre-seeded.
-
-**Test Environment:** Localhost
-
-**User Acceptance Testers:** tbd
-
-**Test Results:** Results and screenshots will be logged in final report.
-
