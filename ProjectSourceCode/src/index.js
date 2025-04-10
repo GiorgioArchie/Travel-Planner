@@ -281,13 +281,14 @@ mapApiKey: mapApiKey
 // Destinations API
 // Get all destinations
 app.get('/api/destinations', isAuthenticated, async (req, res) => {
-try {
-const destinations = await db.any('SELECT * FROM destinations');
-res.json(destinations);
-} catch (err) {
-console.error('Error fetching destinations:', err);
-res.status(500).json({ error: 'Failed to fetch destinations' });
-}
+  try {
+    const destinations = await db.any('SELECT * FROM destinations');
+    console.log('Destinations fetched from database:', destinations);
+    res.json(destinations);
+  } catch (err) {
+    console.error('Error fetching destinations:', err);
+    res.status(500).json({ error: 'Failed to fetch destinations' });
+  }
 });
 
 app.post('/api/destinations', isAuthenticated, async (req, res) => {
@@ -321,40 +322,44 @@ app.post('/api/destinations', isAuthenticated, async (req, res) => {
 
 // Delete a destination
 app.delete('/api/destinations/:id', isAuthenticated, async (req, res) => {
-try {
-const { id } = req.params;
-// Delete destination (cascading will handle related records)
-await db.none('DELETE FROM destinations WHERE id = $1', [id]);
-res.status(200).json({ message: 'Destination deleted successfully' });
-} catch (err) {
-console.error('Error deleting destination:', err);
-res.status(500).json({ error: 'Failed to delete destination' });
-}
+  try {
+    const { id } = req.params;
+    
+    // Delete destination (cascading will handle related records)
+    await db.none('DELETE FROM destinations WHERE id = $1', [id]);
+    
+    res.status(200).json({ message: 'Destination deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting destination:', err);
+    res.status(500).json({ error: 'Failed to delete destination' });
+  }
 });
 
 // Trips API
 // Get all trips for the current user
 app.get('/api/trips', isAuthenticated, async (req, res) => {
-try {
-const username = req.session.user.username;
-const trips = await db.any(`
-SELECT t.trip_id, t.date_start, t.date_end, t.city, t.country, d.id as destination_id
-FROM trips t
-JOIN users_to_trips u ON t.trip_id = u.trip_id
-LEFT JOIN destinations d ON t.city = d.city AND t.country = d.country
-WHERE username = $1
-`, [username]);
-res.json(trips.map(trip => ({
-id: trip.trip_id,
-destinationId: trip.destination_id,
-startDate: trip.date_start,
-endDate: trip.date_end,
-destination: `${trip.city}, ${trip.country}`
-})));
-} catch (err) {
-console.error('Error fetching trips:', err);
-res.status(500).json({ error: 'Failed to fetch trips' });
-}
+  try {
+    const username = req.session.user.username;
+    
+    const trips = await db.any(`
+      SELECT t.trip_id, t.date_start, t.date_end, t.city, t.country, d.id as destination_id
+      FROM trips t
+      JOIN uses_to_trips u ON t.trip_id = u.trip_id
+      LEFT JOIN destinations d ON t.city = d.city AND t.country = d.country
+      WHERE username = $1
+    `, [username]);
+    
+    res.json(trips.map(trip => ({
+      id: trip.trip_id,
+      destinationId: trip.destination_id,
+      startDate: trip.date_start,
+      endDate: trip.date_end,
+      destination: `${trip.city}, ${trip.country}`
+    })));
+  } catch (err) {
+    console.error('Error fetching trips:', err);
+    res.status(500).json({ error: 'Failed to fetch trips' });
+  }
 });
 
 // Create a new trip
@@ -397,24 +402,28 @@ app.post('/api/trips', isAuthenticated, async (req, res) => {
 
 // Delete a trip
 app.delete('/api/trips/:id', isAuthenticated, async (req, res) => {
-try {
-const { id } = req.params;
-const username = req.session.user.username;
-// Verify trip belongs to user
-const trip = await db.oneOrNone(
-'SELECT * FROM users_to_trips WHERE trip_id = $1 AND username = $2',
-[id, username]
-);
-if (!trip) {
-return res.status(404).json({ error: 'Trip not found or unauthorized' });
-}
-// Delete trip (cascading will handle related records)
-await db.none('DELETE FROM trips WHERE trip_id = $1', [id]);
-res.status(200).json({ message: 'Trip deleted successfully' });
-} catch (err) {
-console.error('Error deleting trip:', err);
-res.status(500).json({ error: 'Failed to delete trip' });
-}
+  try {
+    const { id } = req.params;
+    const username = req.session.user.username;
+    
+    // Verify trip belongs to user
+    const trip = await db.oneOrNone(
+      'SELECT * FROM users_to_trips WHERE trip_id = $1 AND username = $2',
+      [id, username]
+    );
+    
+    if (!trip) {
+      return res.status(404).json({ error: 'Trip not found or unauthorized' });
+    }
+    
+    // Delete trip (cascading will handle related records)
+    await db.none('DELETE FROM trips WHERE trip_id = $1', [id]);
+    
+    res.status(200).json({ message: 'Trip deleted successfully' });
+  } catch (err) {
+    console.error('Error deleting trip:', err);
+    res.status(500).json({ error: 'Failed to delete trip' });
+  }
 });
 
 // GET Journal Page
