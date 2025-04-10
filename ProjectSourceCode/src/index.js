@@ -203,6 +203,41 @@ title: 'Events'
 });
 });
 
+app.post('/events', isAuthenticated, async (req, res, next) => {
+  res.render('pages/events', { 
+    LoggedIn: true,
+    username: req.session.user.username,
+   title: 'Events'
+  });
+  const username    = req.session.user.username;
+  console.log('username: ', username);
+  const { event_id, start_time, end_time, city, country, activity, description } = req.body;
+
+  if (!event_id || !start_time || !end_time || !city || !country || !activity || !description) {
+    return res.status(400).send('Start and end dates are required.');
+  }
+
+  try {
+    // insert into trips, grab the auto‑gen trip_id
+    const { trip_id } = await db.one(`
+    INSERT INTO events (event_id, start_time, end_time, city, country, activity, description)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING event_id
+    `, [event_id, start_time, end_time, city, country, activity, description]);
+
+    await db.none(`
+      INSERT INTO trips_to_events (trip_id, event_id)
+      VALUES ($1, $2)
+      `, [trip_id, event_id]);
+
+    // redirect into the “trip details” page
+    res.redirect(`/events/`);
+  } catch (err) {
+    next(err);
+  }
+});
+
+
 app.get('/calendar', isAuthenticated, (req, res) => {
 res.render('pages/calendar', {
 LoggedIn: true,
@@ -231,6 +266,65 @@ app.get('/trips', isAuthenticated, async (req, res) => {
   } catch (err) {
     console.error('Error querying trips:', err);
     res.status(500).send('Server Error');
+  }
+});
+
+app.post('/trips', isAuthenticated, async (req, res, next) => {
+  const username    = req.session.user.username;
+  console.log('username: ', username);
+  const { trip_name, date_start, date_end } = req.body;
+
+  if (!trip_name || !date_start || !date_end) {
+    return res.status(400).send('Start and end dates are required.');
+  }
+
+  try {
+    // insert into trips, grab the auto‑gen trip_id
+    const { trip_id } = await db.one(`
+    INSERT INTO trips (trip_name, date_start, date_end)
+    VALUES ($1, $2, $3)
+    RETURNING trip_id
+    `, [trip_name, date_start, date_end]);
+
+    await db.none(`
+      INSERT INTO users_to_trips (username, trip_id)
+      VALUES ($1, $2)
+      `, [username, trip_id]);
+
+    // redirect into the “trip details” page
+    res.redirect(`/trips/`);
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+app.post('/trips', isAuthenticated, async (req, res, next) => {
+  const username    = req.session.user.username;
+  console.log('username: ', username);
+  const { trip_name, date_start, date_end } = req.body;
+
+  if (!trip_name || !date_start || !date_end) {
+    return res.status(400).send('Start and end dates are required.');
+  }
+
+  try {
+    // insert into trips, grab the auto‑gen trip_id
+    const { trip_id } = await db.one(`
+    INSERT INTO trips (trip_name, date_start, date_end)
+    VALUES ($1, $2, $3)
+    RETURNING trip_id
+    `, [trip_name, date_start, date_end]);
+
+    await db.none(`
+      INSERT INTO users_to_trips (username, trip_id)
+      VALUES ($1, $2)
+      `, [username, trip_id]);
+
+    // redirect into the “trip details” page
+    res.redirect(`/trips/`);
+  } catch (err) {
+    next(err);
   }
 });
 
