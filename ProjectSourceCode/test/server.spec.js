@@ -95,47 +95,55 @@ describe('Testing Add User API', () => {
   
     let agent;
   
-    before(async () => {
+    before(function(done) {
       // Register the test user directly via the app route
-      await chai
-        .request(server)
-        .post('/register')
-        .send({ ...testUser, test: true });
-    });
-  
-    beforeEach(() => {
-      agent = chai.request.agent(server);
-    });
-  
-    afterEach(() => {
-      agent.close();
-    });
-
-    it('positive: GET /api/destinations after logging in should return an array', async () => {
-      // Log in first
-      await agent.post('/login').send(testUser);
-  
-      // Then call the API
-      const res = await agent.get('/api/destinations');
-  
-      res.should.have.status(200);
-      res.body.should.be.an('array');
-    });
-  });
-  
-    it('negative: GET /api/destinations without logging in should return 401', done => {
       chai
         .request(server)
-        .get('/api/destinations')
+        .post('/register')
+        .send({ ...testUser, test: true })
         .end((err, res) => {
-          res.should.have.status(401);
-          res.text.should.include('Please log in to access this page');
+          expect(res).to.have.status(200);
           done();
         });
     });
   
-    
+    beforeEach(function() {
+      agent = chai.request.agent(server);
+    });
   
+    afterEach(function() {
+      agent.close();
+    });
 
+    it('positive: GET /api/destinations after logging in should return an array', function(done) {
+      // Log in first
+      agent
+        .post('/login')
+        .send(testUser)
+        .end((err, res) => {
+          expect(res).to.have.status(200);
+          
+          // Then call the API
+          agent
+            .get('/api/destinations')
+            .end((err, res) => {
+              expect(res).to.have.status(200);
+              expect(res.body).to.be.an('array');
+              done();
+            });
+        });
+    });
+  });
+  
+  it('negative: GET /api/destinations without logging in should return 401', done => {
+    chai
+      .request(server)
+      .get('/api/destinations')
+      .end((err, res) => {
+        res.should.have.status(401);
+        res.text.should.include('Please log in to access this page');
+        done();
+      });
+  });
   
 // ********************************************************************************
