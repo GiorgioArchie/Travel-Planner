@@ -541,13 +541,7 @@ function removeTrip(id) {
 
 // Save data to localStorage (for backup purposes)
 function saveData() {
-  try {
-    localStorage.setItem("travelPlannerDestinations", JSON.stringify(destinations));
-    localStorage.setItem("travelPlannerTrips", JSON.stringify(trips));
-    console.log("Data saved to localStorage (backup)");
-  } catch (e) {
-    console.error("Error saving to localStorage:", e);
-  }
+  console.log("Data changes will be saved on the server only");
 }
 
 // Load data from server and localStorage as backup
@@ -617,9 +611,10 @@ function loadData() {
         const formattedTrip = {
           id: trip.id || trip.trip_id,
           destinationId: trip.destinationId,
-          destination: trip.destination || `${trip.city}, ${trip.country}`,
+          destination: trip.destination || `${trip.city || ''}${trip.city && trip.country ? ', ' : ''}${trip.country || ''}`,
           startDate: trip.startDate || trip.date_start,
-          endDate: trip.endDate || trip.date_end
+          endDate: trip.endDate || trip.date_end,
+          trip_name: trip.trip_name
         };
         
         trips.push(formattedTrip);
@@ -635,41 +630,20 @@ function loadData() {
     
     console.log("Data loaded from server successfully");
     
-    // Save to localStorage as backup
-    saveData();
+    // Clear localStorage to avoid mixing user data
+    localStorage.removeItem("travelPlannerDestinations");
+    localStorage.removeItem("travelPlannerTrips");
   })
   .catch(error => {
     console.error("Error loading data from server:", error);
-    // Fallback to localStorage if server load fails
-    loadFromLocalStorage();
+    // We'll no longer use localStorage as fallback since it causes data leakage
+    console.log("Not loading from localStorage to prevent data leakage between users");
   });
 }
 
 // Load from localStorage as backup
 function loadFromLocalStorage() {
-  try {
-    // Load destinations
-    const savedDestinations = JSON.parse(localStorage.getItem("travelPlannerDestinations")) || [];
-    savedDestinations.forEach(destination => {
-      destinations.push(destination);
-      addMarkerToMap(destination);
-      addDestinationToList(destination);
-    });
-    
-    // Load trips
-    const savedTrips = JSON.parse(localStorage.getItem("travelPlannerTrips")) || [];
-    savedTrips.forEach(trip => {
-      trips.push(trip);
-      addTripToList(trip);
-    });
-    
-    // Update dropdowns
-    updateDestinationDropdown();
-    
-    console.log("Data loaded from localStorage (backup)");
-  } catch (e) {
-    console.error("Error loading from localStorage:", e);
-  }
+  console.log("Local storage loading disabled to prevent data leakage between users");
 }
 
 // Add event listener for when DOM is loaded
