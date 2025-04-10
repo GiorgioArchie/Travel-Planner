@@ -223,6 +223,47 @@ const isAuthenticated = (req, res, next) => {
   }
   return res.status(401).send('Please log in to access this page');
 };
+
+app.post('/events', isAuthenticated, async (req, res, next) => {
+  console.log('got to app.post events')
+  // Retrieve necessary data from the request body.
+  // Make sure trip_id is included to identify which trip this event belongs to.
+  const { trip_id, start_time, end_time, city, country, activity, description } = req.body;
+  const username = req.session.user.username;
+  
+  console.log('username: ', username);
+
+  // Validate required input data.
+  if (!trip_id || !start_time || !end_time || !city || !country || !activity || !description) {
+    return res.status(400).send('All event fields are required, including trip association.');
+  }
+
+  try {
+    // Insert the event into the events table.
+    // Note: Do not include event_id in the insert if it's auto-generated.
+    const eventInsertQuery = `
+      INSERT INTO events (start_time, end_time, city, country, activity, description)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING event_id
+    `;
+    const eventResult = await db.one(eventInsertQuery, [start_time, end_time, city, country, activity, description]);
+    
+    // Use the returned event_id to create an association in the join table.
+    const event_id = eventResult.event_id;
+    const joinTableQuery = `
+      INSERT INTO trips_to_events (trip_id, event_id)
+      VALUES ($1, $2)
+    `;
+    await db.none(joinTableQuery, [trip_id, event_id]);
+
+    // Render the page (or redirect) after successful insertion.
+    res.redirect('/trips?message=Event added successfully!')
+  } catch (error) {
+    console.error('Error processing event insertion:', error);
+    res.status(500).send('Server Error');
+  }
+});
+
 app.post('/events', isAuthenticated, async (req, res, next) => {
   res.render('pages/events', { 
     LoggedIn: true,
