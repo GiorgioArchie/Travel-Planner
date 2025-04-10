@@ -194,13 +194,44 @@ const isAuthenticated = (req, res, next) => {
   return res.status(401).send('Please log in to access this page');
 };
 
-// Route for events page (protected)
-app.get('/events', isAuthenticated, (req, res) => {
-res.render('pages/events', {
-LoggedIn: true,
-username: req.session.user.username,
-title: 'Events'
-});
+app.post('/events', isAuthenticated, async (req, res, next) => {
+  console.log('got to app.post events')
+  // Retrieve necessary data from the request body.
+  // Make sure trip_id is included to identify which trip this event belongs to.
+  const { trip_id, start_time, end_time, city, country, activity, description } = req.body;
+  const username = req.session.user.username;
+  
+  console.log('username: ', username);
+
+  // Validate required input data.
+  if (!trip_id || !start_time || !end_time || !city || !country || !activity || !description) {
+    return res.status(400).send('All event fields are required, including trip association.');
+  }
+
+  try {
+    // Insert the event into the events table.
+    // Note: Do not include event_id in the insert if it's auto-generated.
+    const eventInsertQuery = `
+      INSERT INTO events (start_time, end_time, city, country, activity, description)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING event_id
+    `;
+    const eventResult = await db.one(eventInsertQuery, [start_time, end_time, city, country, activity, description]);
+    
+    // Use the returned event_id to create an association in the join table.
+    const event_id = eventResult.event_id;
+    const joinTableQuery = `
+      INSERT INTO trips_to_events (trip_id, event_id)
+      VALUES ($1, $2)
+    `;
+    await db.none(joinTableQuery, [trip_id, event_id]);
+
+    // Render the page (or redirect) after successful insertion.
+    res.redirect('/trips?message=Event added successfully!')
+  } catch (error) {
+    console.error('Error processing event insertion:', error);
+    res.status(500).send('Server Error');
+  }
 });
 
 app.post('/events', isAuthenticated, async (req, res, next) => {
@@ -298,64 +329,12 @@ app.post('/trips', isAuthenticated, async (req, res, next) => {
   }
 });
 
-
-app.post('/trips', isAuthenticated, async (req, res, next) => {
-  const username    = req.session.user.username;
-  console.log('username: ', username);
-  const { trip_name, date_start, date_end } = req.body;
-
-  if (!trip_name || !date_start || !date_end) {
-    return res.status(400).send('Start and end dates are required.');
-  }
-
-  try {
-    // insert into trips, grab the auto‑gen trip_id
-    const { trip_id } = await db.one(`
-    INSERT INTO trips (trip_name, date_start, date_end)
-    VALUES ($1, $2, $3)
-    RETURNING trip_id
-    `, [trip_name, date_start, date_end]);
-
-    await db.none(`
-      INSERT INTO users_to_trips (username, trip_id)
-      VALUES ($1, $2)
-      `, [username, trip_id]);
-
-    // redirect into the “trip details” page
-    res.redirect(`/trips/`);
-  } catch (err) {
-    next(err);
-  }
-});
-
-app.post('/trips', isAuthenticated, async (req, res, next) => {
-  const username    = req.session.user.username;
-  console.log('username: ', username);
-  const { trip_name, date_start, date_end } = req.body;
-
-  if (!trip_name || !date_start || !date_end) {
-    return res.status(400).send('Start and end dates are required.');
-  }
-
-  try {
-    // insert into trips, grab the auto‑gen trip_id
-    const { trip_id } = await db.one(`
-    INSERT INTO trips (trip_name, date_start, date_end)
-    VALUES ($1, $2, $3)
-    RETURNING trip_id
-    `, [trip_name, date_start, date_end]);
-
-    await db.none(`
-      INSERT INTO users_to_trips (username, trip_id)
-      VALUES ($1, $2)
-      `, [username, trip_id]);
-
-      console.log('[POST /trips] Linked trip_id', trip_id, 'to username', username); //test
-    // redirect into the “trip details” page
-    res.redirect(`/trips/`);
-  } catch (err) {
-    next(err);
-  }
+app.get('/journal', isAuthenticated, (req, res) => {
+  res.render('pages/journal', { 
+    LoggedIn: true,
+    username: req.session.user.username,
+    title: 'Journal'
+  });
 });
 
 // Route for map page

@@ -53,6 +53,7 @@
 <body>
 <div class="container">
   <h1>All Trips Page</h1>
+  {{>message}}
   {{#if trips.length}}
     <div class="row">
       {{#each trips}}
@@ -63,9 +64,7 @@
               <h2 class="card-title">{{trip_name}}</h2>
               <p><strong>Start Date:</strong> {{date_start}}</p>
               <p><strong>End Date:</strong> {{date_end}}</p>
-              <p><strong>Event Activities:</strong> {{activity}}</p>
-
-              
+              <p><strong>Event Activity:</strong> {{activity}}</p>
               <!-- Button to trigger modal for adding an event to the trip -->
               <div class="d-flex justify-content-end mb-4">
                 <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createEventModal-{{this.id}}">
@@ -81,6 +80,7 @@
           <div class="modal-dialog">
             <div class="modal-content">
               <form action="/events" method="POST" class="needs-validation" novalidate>
+              <input type="hidden" name="trip_id" value="{{trip_id}}" />
                 <div class="modal-header">
                   <h5 class="modal-title" id="createEventModalLabel-{{this.id}}">Create an Event for {{trip_name}}</h5>
                   <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -230,6 +230,71 @@
         </div>
       </div>
     </div>
+    </div>
+  {{else}}
+    <p>No trips available.</p>
+  {{/if}}
+</div>
+
+
+
+    <div class="d-flex justify-content-end mb-4">
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#createTripModal"><i class="bi bi-plus-circle"></i> Create Trip</button>
+    </div>
+
+    <div class="modal fade" id="createTripModal" tabindex="-1" aria-labelledby="createTripModalLabel" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form action="/trips" method="POST" class="needs-validation" novalidate>
+            <div class="modal-header">
+              <h5 class="modal-title" id="createTripModalLabel">Create a New Trip</h5>
+              <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+              <div class="mb-3">
+                <label for="trip_name" class="form-label">Trip Name</label>
+                <input
+                  type="text"
+                  class="form-control"
+                  id="trip_name"
+                  name="trip_name"
+                  required
+                />
+                <div class="invalid-feedback">Please enter a trip name.</div>
+              </div>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label for="date_start" class="form-label">Start Date</label>
+                  <input
+                    type="date"
+                    class="form-control"
+                    id="date_start"
+                    name="date_start"
+                    required
+                  />
+                  <div class="invalid-feedback">Please choose a start date.</div>
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label for="date_end" class="form-label">End Date</label>
+                  <input
+                    type="date"
+                    class="form-control"
+                    id="date_end"
+                    name="date_end"
+                    required
+                  />
+                  <div class="invalid-feedback">Please choose an end date.</div>
+                </div>
+              </div>
+            </div>
+            <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+              <button type="submit" class="btn btn-success"><i class="bi bi-check-circle"></i> Create Trip</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -244,4 +309,3 @@
   </script>
 
 </body>
-</html>
