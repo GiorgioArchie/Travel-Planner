@@ -35,7 +35,7 @@ function initMap() {
     // Initialize datepickers
     initializeDatepickers();
     
-    // Load data from server and localStorage as backup
+    // Load data from server
     loadData();
     
   } catch (error) {
@@ -99,6 +99,8 @@ function addDestination(event) {
         return response.json();
       })
       .then(savedDestination => {
+        console.log("Destination saved to database:", savedDestination);
+        
         // Format destination for client-side use
         const destination = {
           id: savedDestination.id,
@@ -120,33 +122,13 @@ function addDestination(event) {
         // Update destination dropdown in trip form
         updateDestinationDropdown();
         
-        // Save to localStorage as backup
-        saveData();
-        
         // Clear the form
         document.getElementById("cityName").value = "";
         document.getElementById("countryName").value = "";
       })
       .catch(error => {
         console.error('Error saving destination:', error);
-        
-        // Fallback: save locally even if server save fails
-        const destination = {
-          id: Date.now(),
-          city: cityName,
-          country: countryName,
-          lat: location.lat(),
-          lng: location.lng()
-        };
-        
-        destinations.push(destination);
-        addMarkerToMap(destination);
-        addDestinationToList(destination);
-        updateDestinationDropdown();
-        saveData();
-        
-        document.getElementById("cityName").value = "";
-        document.getElementById("countryName").value = "";
+        alert('Error saving destination: ' + error.message);
       });
     } else {
       console.error(`Geocoding failed with status: ${status}`);
@@ -159,6 +141,7 @@ function addDestination(event) {
 function addTrip(event) {
   event.preventDefault();
   
+  const tripName = document.getElementById("tripName").value;
   const destinationId = document.getElementById("tripDestination").value;
   const startDate = document.getElementById("tripStartDate").value;
   const endDate = document.getElementById("tripEndDate").value;
@@ -178,12 +161,15 @@ function addTrip(event) {
   
   // Create trip data object
   const tripData = {
+    tripName: tripName || `Trip to ${destination.city}`,
     destinationId: parseInt(destinationId),
     startDate: startDate,
     endDate: endDate,
     city: destination.city,
     country: destination.country
   };
+  
+  console.log("Submitting trip data:", tripData);
   
   // Save trip to database
   fetch('/api/trips', {
@@ -195,14 +181,16 @@ function addTrip(event) {
   })
   .then(response => {
     if (!response.ok) {
-      throw new Error('Network response was not ok');
+      return response.json().then(err => { throw err; });
     }
     return response.json();
   })
   .then(savedTrip => {
+    console.log("Trip saved successfully:", savedTrip);
+    
     // Create trip object for client-side use
     const trip = {
-      id: savedTrip.id || savedTrip.trip_id,
+      id: savedTrip.id,
       destinationId: parseInt(destinationId),
       destination: `${destination.city}, ${destination.country}`,
       startDate: startDate,
@@ -218,34 +206,18 @@ function addTrip(event) {
     // Update marker info windows
     updateAllMarkerInfoWindows();
     
-    // Save to localStorage as backup
-    saveData();
-    
     // Clear the form
+    document.getElementById("tripName").value = "";
     document.getElementById("tripDestination").selectedIndex = 0;
     document.getElementById("tripStartDate").value = "";
     document.getElementById("tripEndDate").value = "";
+    
+    // Show success message
+    alert("Trip created successfully!");
   })
   .catch(error => {
     console.error('Error saving trip:', error);
-    
-    // Fallback: save locally even if server save fails
-    const trip = {
-      id: Date.now(),
-      destinationId: parseInt(destinationId),
-      destination: `${destination.city}, ${destination.country}`,
-      startDate: startDate,
-      endDate: endDate
-    };
-    
-    trips.push(trip);
-    addTripToList(trip);
-    updateAllMarkerInfoWindows();
-    saveData();
-    
-    document.getElementById("tripDestination").selectedIndex = 0;
-    document.getElementById("tripStartDate").value = "";
-    document.getElementById("tripEndDate").value = "";
+    alert("Error saving trip: " + (error.error || "Unknown error"));
   });
 }
 
@@ -468,11 +440,11 @@ function removeDestination(id) {
   fetch(`/api/destinations/${id}`, {
     method: 'DELETE'
   })
-  .catch(error => {
-    console.error('Error deleting destination from server:', error);
-  })
-  .finally(() => {
-    // Continue with local removal regardless of server response
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Failed to delete destination from server');
+    }
+    
     // Find the index of this destination
     const index = destinations.findIndex(d => Number(d.id) === Number(id));
     
@@ -499,10 +471,11 @@ function removeDestination(id) {
       
       // Update destination dropdown
       updateDestinationDropdown();
-      
-      // Save updated data
-      saveData();
     }
+  })
+  .catch(error => {
+    console.error('Error deleting destination:', error);
+    alert('Error deleting destination: ' + error.message);
   });
 }
 
@@ -512,11 +485,11 @@ function removeTrip(id) {
   fetch(`/api/trips/${id}`, {
     method: 'DELETE'
   })
-  .catch(error => {
-    console.error('Error deleting trip from server:', error);
-  })
-  .finally(() => {
-    // Continue with local removal regardless of server response
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Failed to delete trip from server');
+    }
+    
     // Find the index of this trip
     const index = trips.findIndex(t => Number(t.id) === Number(id));
     
@@ -532,26 +505,15 @@ function removeTrip(id) {
       
       // Update marker info windows
       updateAllMarkerInfoWindows();
-      
-      // Save updated data
-      saveData();
     }
+  })
+  .catch(error => {
+    console.error('Error deleting trip:', error);
+    alert('Error deleting trip: ' + error.message);
   });
 }
 
-// Save data to localStorage (for backup purposes)
-function saveData() {
-  try {
-    localStorage.setItem("travelPlannerDestinations", JSON.stringify(destinations));
-    localStorage.setItem("travelPlannerTrips", JSON.stringify(trips));
-    console.log("Data saved to localStorage (backup)");
-  } catch (e) {
-    console.error("Error saving to localStorage:", e);
-  }
-}
-
-// Load data from server and localStorage as backup
-// Replace the loadData function in map.js with this improved version
+// Load data from server
 function loadData() {
   console.log("Loading data from server...");
   
@@ -575,101 +537,75 @@ function loadData() {
     tripsList.innerHTML = '';
   }
   
-  // First try to load from server
-  Promise.all([
-    fetch('/api/destinations').then(res => {
+  // First load destinations, then load trips (ensure proper order)
+  fetch('/api/destinations')
+    .then(res => {
       if (!res.ok) {
         throw new Error(`Failed to fetch destinations: ${res.status}`);
       }
       return res.json();
-    }),
-    fetch('/api/trips').then(res => {
+    })
+    .then(serverDestinations => {
+      console.log("Server destinations:", serverDestinations);
+      
+      // Process destinations
+      if (serverDestinations && serverDestinations.length > 0) {
+        serverDestinations.forEach(destination => {
+          // Format destination for client-side use
+          const dest = {
+            id: destination.id,
+            city: destination.city,
+            country: destination.country,
+            lat: parseFloat(destination.latitude),
+            lng: parseFloat(destination.longitude)
+          };
+          
+          destinations.push(dest);
+          addMarkerToMap(dest);
+          addDestinationToList(dest);
+        });
+      }
+      
+      // Update dropdowns
+      updateDestinationDropdown();
+      
+      // Load trips after destinations are loaded
+      return fetch('/api/trips');
+    })
+    .then(res => {
       if (!res.ok) {
         throw new Error(`Failed to fetch trips: ${res.status}`);
       }
       return res.json();
     })
-  ])
-  .then(([serverDestinations, serverTrips]) => {
-    console.log("Server destinations:", serverDestinations);
-    console.log("Server trips:", serverTrips);
-    
-    // If we got data from the server, use it
-    if (serverDestinations && serverDestinations.length > 0) {
-      serverDestinations.forEach(destination => {
-        // Format destination for client-side use
-        const dest = {
-          id: destination.id,
-          city: destination.city,
-          country: destination.country,
-          lat: destination.latitude || parseFloat(destination.latitude),
-          lng: destination.longitude || parseFloat(destination.longitude)
-        };
-        
-        destinations.push(dest);
-        addMarkerToMap(dest);
-        addDestinationToList(dest);
-      });
-    }
-    
-    if (serverTrips && serverTrips.length > 0) {
-      serverTrips.forEach(trip => {
-        const formattedTrip = {
-          id: trip.id || trip.trip_id,
-          destinationId: trip.destinationId,
-          destination: trip.destination || `${trip.city}, ${trip.country}`,
-          startDate: trip.startDate || trip.date_start,
-          endDate: trip.endDate || trip.date_end
-        };
-        
-        trips.push(formattedTrip);
-        addTripToList(formattedTrip);
-      });
-    }
-    
-    // Update dropdowns
-    updateDestinationDropdown();
-    
-    // Update info windows
-    updateAllMarkerInfoWindows();
-    
-    console.log("Data loaded from server successfully");
-    
-    // Save to localStorage as backup
-    saveData();
-  })
-  .catch(error => {
-    console.error("Error loading data from server:", error);
-    // Fallback to localStorage if server load fails
-    loadFromLocalStorage();
-  });
-}
-
-// Load from localStorage as backup
-function loadFromLocalStorage() {
-  try {
-    // Load destinations
-    const savedDestinations = JSON.parse(localStorage.getItem("travelPlannerDestinations")) || [];
-    savedDestinations.forEach(destination => {
-      destinations.push(destination);
-      addMarkerToMap(destination);
-      addDestinationToList(destination);
+    .then(serverTrips => {
+      console.log("Server trips:", serverTrips);
+      
+      // Process trips
+      if (serverTrips && serverTrips.length > 0) {
+        serverTrips.forEach(trip => {
+          const formattedTrip = {
+            id: trip.id || trip.trip_id,
+            destinationId: trip.destinationId,
+            destination: trip.destination || `${trip.city}, ${trip.country}`,
+            startDate: trip.startDate || trip.date_start,
+            endDate: trip.endDate || trip.date_end
+          };
+          
+          trips.push(formattedTrip);
+          addTripToList(formattedTrip);
+        });
+      }
+      
+      // Update info windows
+      updateAllMarkerInfoWindows();
+      
+      console.log("Data loaded from server successfully");
+    })
+    .catch(error => {
+      console.error("Error loading data from server:", error);
+      alert("Error loading data from server: " + error.message);
     });
-    
-    // Load trips
-    const savedTrips = JSON.parse(localStorage.getItem("travelPlannerTrips")) || [];
-    savedTrips.forEach(trip => {
-      trips.push(trip);
-      addTripToList(trip);
-    });
-    
-    // Update dropdowns
-    updateDestinationDropdown();
-    
-    console.log("Data loaded from localStorage (backup)");
-  } catch (e) {
-    console.error("Error loading from localStorage:", e);
-  }
 }
 
 // Add event listener for when DOM is loaded
