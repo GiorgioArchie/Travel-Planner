@@ -826,6 +826,10 @@ app.post('/journal/edit', isAuthenticated, async (req, res) => {
 ////////////////////////////////////////////////////
 // ADD THIS CALENDAR ROUTE TO YOUR EXISTING index.js
 ////////////////////////////////////////////////////
+
+/* ①  static files — put this BEFORE your routes */
+app.use(express.static(path.join(__dirname, 'public')));
+
 // 2) Define a route for "/calendar" that renders "calendar.hbs"
 app.get('/calendar', (req, res) => {
   res.render('pages/calendar');
@@ -835,6 +839,68 @@ app.get('/calendar', (req, res) => {
 app.get('/', (req, res) => {
   res.redirect('/calendar');
 });
+
+/*
+function rowToEvent(r) {
+  const endPlus1 = new Date(r.date_end);
+  endPlus1.setDate(endPlus1.getDate() + 1);          // ← ToastUI end is exclusive
+
+  return {
+    id:         r.trip_id.toString(),
+    calendarId: 'trips',            // must match a calendar you declared
+    title:      r.trip_name,
+    start:      `${r.date_start}T00:00:00`, // local midnight avoids TZ shift
+    end:        endPlus1.toISOString().slice(0,10) + 'T00:00:00',
+    isAllday:   true,
+    raw: { city: r.city, country: r.country }
+  };
+}
+
+
+app.get('/api/trips', async (_req, res) => {
+  const { rows } = await pool.query('SELECT * FROM trips');
+  res.json(rows.map(tripRowToEvent));
+});
+*/
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+/* 
+  Helper function: Convert a row from the trips table 
+  to a Toast UI Calendar event object.
+*/
+function rowToEvent(r) {
+  // If date_end is null, use date_start as a fallback.
+  const endDate = r.date_end || r.date_start;
+
+  // Create a Date object for endDate and add one day.
+  const endPlus1 = new Date(endDate);
+  endPlus1.setDate(endPlus1.getDate() + 1);
+
+  return {
+    id:         r.trip_id.toString(),
+    calendarId: 'trips',  // Make sure this ID matches the one you specify on the client side.
+    title:      r.trip_name,
+    start:      `${r.date_start}T00:00:00`,   // Include a time part to ensure correct display.
+    // Since Toast UI treats end as exclusive, we add one day and then format it as YYYY-MM-DDT00:00:00:
+    end:        endPlus1.toISOString().slice(0, 10) + 'T00:00:00',
+    isAllday:   true,
+    raw:        { city: r.city, country: r.country }
+  };
+}
+
+/* API route to fetch trips from the database */
+app.get('/api/trips', async (_req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM trips');
+    // Map the rows to event objects using rowToEvent
+    res.json(rows.map(rowToEvent));
+  } catch (err) {
+    console.error('GET /api/trips error:', err);
+    res.status(500).json({ error: 'db-error', message: err.message });
+  }
+});
+
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 //###############################################################################//
 
