@@ -867,9 +867,9 @@ app.post('/journal/edit', isAuthenticated, async (req, res) => {
 
 
 
-////////////////////////////////////////////////////
-// ADD THIS CALENDAR ROUTE TO YOUR EXISTING index.js
-////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
+//////////////// ADD THIS CALENDAR ROUTE TO YOUR EXISTING index.js ///////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
 
 /* ①  static files — put this BEFORE your routes */
 app.use(express.static(path.join(__dirname, 'public')));
@@ -883,30 +883,6 @@ app.get('/calendar', (req, res) => {
 app.get('/', (req, res) => {
   res.redirect('/calendar');
 });
-
-/*
-function rowToEvent(r) {
-  const endPlus1 = new Date(r.date_end);
-  endPlus1.setDate(endPlus1.getDate() + 1);          // ← ToastUI end is exclusive
-
-  return {
-    id:         r.trip_id.toString(),
-    calendarId: 'trips',            // must match a calendar you declared
-    title:      r.trip_name,
-    start:      `${r.date_start}T00:00:00`, // local midnight avoids TZ shift
-    end:        endPlus1.toISOString().slice(0,10) + 'T00:00:00',
-    isAllday:   true,
-    raw: { city: r.city, country: r.country }
-  };
-}
-
-
-app.get('/api/trips', async (_req, res) => {
-  const { rows } = await pool.query('SELECT * FROM trips');
-  res.json(rows.map(tripRowToEvent));
-});
-*/
-//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 /* 
   Helper function: Convert a row from the trips table 
@@ -932,23 +908,61 @@ function rowToEvent(r) {
   };
 }
 
+app.get('/api/user/current', isAuthenticated, (req, res) => {
+  // This endpoint simply returns the username from the session
+  res.json({
+    username: req.session.user.username
+  });
+});
 /* API route to fetch trips from the database */
-app.get('/api/trips', async (_req, res) => {
+app.get('/api/trips', isAuthenticated, async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM trips');
-    // Map the rows to event objects using rowToEvent
-    res.json(rows.map(rowToEvent));
+    const username = req.session.user.username;
+    console.log('[GET /api/trips] Fetching trips for username:', username);
+   
+    const trips = await db.any(`
+      SELECT
+        t.trip_id,
+        t.trip_name,
+        t.date_start,
+        t.date_end,
+        t.city,
+        t.country,
+        d.id as destination_id,
+        u.username
+      FROM trips t
+      JOIN users_to_trips u ON t.trip_id = u.trip_id
+      LEFT JOIN destinations d ON (t.city = d.city AND t.country = d.country)
+      WHERE u.username = $1
+    `, [username]);
+   
+    console.log('[GET /api/trips] Retrieved trips with usernames:', trips.map(t => ({
+      trip_id: t.trip_id,
+      trip_name: t.trip_name,
+      username: t.username
+    })));
+   
+    // Map the trips to a consistent format
+    const formattedTrips = trips.map(trip => ({
+      id: trip.trip_id,
+      tripName: trip.trip_name,
+      destinationId: trip.destination_id,
+      startDate: trip.date_start,
+      endDate: trip.date_end,
+      city: trip.city,
+      country: trip.country,
+      destination: trip.city && trip.country ? `${trip.city}, ${trip.country}` : undefined,
+      username: trip.username || username // Make sure username is included
+    }));
+   
+    res.json(formattedTrips);
   } catch (err) {
-    console.error('GET /api/trips error:', err);
-    res.status(500).json({ error: 'db-error', message: err.message });
+    console.error('[GET /api/trips] Error fetching trips:', err);
+    res.status(500).json({ error: 'Failed to fetch trips', details: err.message });
   }
 });
 
-//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-//###############################################################################//
-
-
+//###############################################################################
 
 // Test welcome route
 app.get('/welcome', (req, res) => {

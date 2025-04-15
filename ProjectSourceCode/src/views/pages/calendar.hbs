@@ -1,18 +1,12 @@
-<!-- link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" / -->
-<!-- script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script -->
-<!-- CDN -->
-<!-- link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" / -->
-<!-- To get bundle file for legacy browser -->
-<!-- <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.ie11.min.js"></script> -->
-
-<!-- Import as es module -->
-<!-- <script type="module" src="https://uicdn.toast.com/calendar/latest/toastui-calendar.mjs"></script> -->
-
-<!--####################################################################################################### -->
-<!-- views/calendar.hbs -->
+<!-- views/pages/calendar.hbs -->
 <link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css">
 <link rel="stylesheet" href="https://uicdn.toast.com/tui-date-picker/latest/tui-date-picker.css">
 <link rel="stylesheet" href="https://uicdn.toast.com/tui-time-picker/latest/tui-time-picker.css">
+
+
+<!-- Add this element with the username data attribute -->
+<div id="calendar-data" data-username="{{username}}"></div>
+
 
 <div class="cal‑nav" style="margin:0 0 .5rem">
   <button id="prev">‹</button>
@@ -21,10 +15,17 @@
   <button id="today">Today</button>
 </div>
 
+
 <div id="calendar" style="height: 800px;"></div>
 <div id="clicked-event" style="margin-top:1rem; font-weight:bold;"></div>
 
+
+<!-- Required dependencies first -->
+<script src="https://uicdn.toast.com/tui.code-snippet/latest/tui-code-snippet.min.js"></script>
+<script src="https://uicdn.toast.com/tui.time-picker/latest/tui-time-picker.min.js"></script>
+<script src="https://uicdn.toast.com/tui.date-picker/latest/tui-date-picker.min.js"></script>
 <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script>
-<!-- your local JS must come **after** the CDN script -->
+
+
+<!-- your local JS must come after the CDN script -->
 <script src="/js/calendar.js" defer></script>
-<!--####################################################################################################### -->
