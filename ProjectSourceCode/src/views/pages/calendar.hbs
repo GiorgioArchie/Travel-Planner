@@ -1,65 +1,30 @@
-<!DOCTYPE html>
-<html>
-  <head>
-    <meta charset="utf-8" />
-    <title>TOAST UI Calendar</title>
-    <!-- 1) Toast UI Calendar CSS from CDN -->
-    <link
-      rel="stylesheet"
-      href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css"
-    />
-  </head>
-  <body>
-    <h1>TOAST UI Calendar</h1>
-    <!-- 2) Container for the calendar -->
-    <div id="calendar" style="height: 600px;"></div>
+<!-- link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" / -->
+<!-- script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script -->
+<!-- CDN -->
+<!-- link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css" / -->
+<!-- To get bundle file for legacy browser -->
+<!-- <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.ie11.min.js"></script> -->
 
-    <!-- 3) Toast UI Calendar JS from CDN -->
-    <script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script>
+<!-- Import as es module -->
+<!-- <script type="module" src="https://uicdn.toast.com/calendar/latest/toastui-calendar.mjs"></script> -->
 
-    <!-- 4) [OPTIONAL] Disable collecting hostname for Google Analytics -->
-    <script>
-      if (tui && tui.Calendar) {
-        tui.Calendar.sendHostname = function() {
-          /* no-op: Disables GA tracking in toast-ui-calendar */
-        };
-      }
-    </script>
+<!--####################################################################################################### -->
+<!-- views/calendar.hbs -->
+<link rel="stylesheet" href="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.css">
+<link rel="stylesheet" href="https://uicdn.toast.com/tui-date-picker/latest/tui-date-picker.css">
+<link rel="stylesheet" href="https://uicdn.toast.com/tui-time-picker/latest/tui-time-picker.css">
 
-    <!-- 5) Inline script to initialize the calendar -->
-    <script>
-      document.addEventListener('DOMContentLoaded', () => {
-        const container = document.getElementById('calendar');
-        const options = {
-          defaultView: 'week',
-          timezone: {
-            zones: [
-              { timezoneName: 'Asia/Seoul', displayLabel: 'Seoul' },
-              { timezoneName: 'Europe/London', displayLabel: 'London' },
-            ],
-          },
-          calendars: [
-            {
-              id: 'cal1',
-              name: 'Personal',
-              backgroundColor: '#03bd9e',
-            },
-            {
-              id: 'cal2',
-              name: 'Work',
-              backgroundColor: '#00a9ff',
-            },
-          ],
-        };
+<div class="cal‑nav" style="margin:0 0 .5rem">
+  <button id="prev">‹</button>
+  <span id="range"></span>
+  <button id="next">›</button>
+  <button id="today">Today</button>
+</div>
 
-        // Create the calendar instance
-        const calendar = new tui.Calendar(container, options);
+<div id="calendar" style="height: 800px;"></div>
+<div id="clicked-event" style="margin-top:1rem; font-weight:bold;"></div>
 
-        // Example: Listen for events if desired
-        // calendar.on('beforeCreateSchedule', (event) => {
-        //   console.log('Creating new schedule:', event);
-        // });
-      });
-    </script>
-  </body>
-</html>
+<script src="https://uicdn.toast.com/calendar/latest/toastui-calendar.min.js"></script>
+<!-- your local JS must come **after** the CDN script -->
+<script src="/js/calendar.js" defer></script>
+<!--####################################################################################################### -->
