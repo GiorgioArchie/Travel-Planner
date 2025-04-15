@@ -331,7 +331,6 @@ app.post('/trips', isAuthenticated, async (req, res, next) => {
       VALUES ($1, $2)
     `, [username, trip_id]);
     
-    res.redirect('/trips');
     console.log(`[POST /trips] Linked trip_id ${trip_id} to username ${username}`);
     // redirect to the trips page
     res.redirect('/trips?message=Trip created successfully');
