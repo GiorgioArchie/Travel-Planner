@@ -346,39 +346,30 @@ app.get('/trips', isAuthenticated, async (req, res) => {
 // Consolidated route for adding a trip (non-API version)
 app.post('/trips', isAuthenticated, async (req, res, next) => {
   const username = req.session.user.username;
-  console.log('[POST /trips] Processing trip creation with data:', req.body);
-  
-  const { trip_name, date_start, date_end } = req.body;
+  const { trip_name, date_start, date_end, city, country } = req.body;
 
   if (!trip_name || !date_start || !date_end) {
-    console.error('[POST /trips] Missing required fields:', req.body);
     return res.status(400).send('Trip name, start and end dates are required.');
   }
 
   try {
-    // insert into trips, grab the auto-gen trip_id
     const { trip_id } = await db.one(`
-      INSERT INTO trips (trip_name, date_start, date_end)
-      VALUES ($1, $2, $3)
+      INSERT INTO trips (trip_name, date_start, date_end, city, country)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING trip_id
-    `, [trip_name, date_start, date_end]);
-
-    console.log(`[POST /trips] Created trip with ID: ${trip_id}`);
+    `, [trip_name, date_start, date_end, city || null, country || null]);
 
     await db.none(`
       INSERT INTO users_to_trips (username, trip_id)
       VALUES ($1, $2)
     `, [username, trip_id]);
 
-    console.log(`[POST /trips] Linked trip_id ${trip_id} to username ${username}`);
-    
-    // redirect to the trips page
     res.redirect('/trips');
   } catch (err) {
-    console.error('[POST /trips] Error creating trip:', err);
     next(err);
   }
 });
+
 
 // Route for map page
 app.get('/map', isAuthenticated, (req, res) => {
