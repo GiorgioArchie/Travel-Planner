@@ -1,0 +1,87 @@
+<!-- Full-page wrapper for background -->
+<div class="container-fluid min-vh-100" style="background-color: #0d1b2a; color: #ffffff;">
+  <div class="container py-5">
+    <!-- Trip Header -->
+    <h1 class="text-center mb-4">{{trip.trip_name}}</h1>
+
+    <!-- Carousel: Events -->
+    {{#if events.length}}
+      <div id="eventCarousel" class="carousel slide border border-light rounded shadow" data-bs-ride="carousel">
+        <!-- Indicators -->
+        <div class="carousel-indicators">
+          {{#each events}}
+            <button 
+              type="button" 
+              data-bs-target="#eventCarousel" 
+              data-bs-slide-to="{{@index}}" 
+              class="{{#if @first}}active{{/if}}" 
+              aria-current="{{#if @first}}true{{/if}}" 
+              aria-label="Slide {{inc @index}}"
+            ></button>
+          {{/each}}
+        </div>
+
+        <!-- Carousel Inner -->
+        <div class="carousel-inner">
+          {{#each events}}
+            <div class="carousel-item {{#if @first}}active{{/if}}">
+              <div class="card p-4" style="background-color: #d2f5e3; color: #1a1a1a;">
+                <h3>{{activity}}</h3>
+                <p><strong>Time:</strong> {{start_time}} – {{end_time}}</p>
+                {{#if city}}<p><strong>City:</strong> {{city}}</p>{{/if}}
+                {{#if country}}<p><strong>Country:</strong> {{country}}</p>{{/if}}
+                {{#if description}}<p><strong>Description:</strong> {{description}}</p>{{/if}}
+              </div>
+            </div>
+          {{/each}}
+        </div>
+
+        <!-- Controls -->
+        <button class="carousel-control-prev" type="button" data-bs-target="#eventCarousel" data-bs-slide="prev">
+          <span class="carousel-control-prev-icon bg-light rounded-circle" aria-hidden="true"></span>
+          <span class="visually-hidden">Previous</span>
+        </button>
+        <button class="carousel-control-next" type="button" data-bs-target="#eventCarousel" data-bs-slide="next">
+          <span class="carousel-control-next-icon bg-light rounded-circle" aria-hidden="true"></span>
+          <span class="visually-hidden">Next</span>
+        </button>
+      </div>
+    {{else}}
+      <p class="text-muted text-center">No events added for this trip yet.</p>
+    {{/if}}
+
+    <!-- Back button -->
+    <div class="text-center mt-4">
+      <a href="/trips" class="btn btn-outline-light">Back to All Trips</a>
+    </div>
+  </div>
+  {{#if journals.length}}
+  <div class="mt-5">
+    <h2 class="text-white text-center mb-4">Trip Journals</h2>
+    <div class="row g-4">
+      {{#each journals}}
+        <div class="col-md-6">
+          <div class="card h-100 shadow-sm" style="background-color: #f1fdf5; color: #1a1a1a;">
+            <div class="card-body">
+              <h5 class="card-title">Journal #{{@index}}</h5>
+              <p class="card-text">{{comments}}</p>
+
+              {{#if images.length}}
+                <div class="mt-3">
+                  <h6>Photos:</h6>
+                  <div class="d-flex flex-wrap gap-2">
+                    {{#each images}}
+                      <img src="{{image_url}}" alt="Journal Image" class="img-thumbnail" style="width: 100px; height: auto;">
+                    {{/each}}
+                  </div>
+                </div>
+              {{/if}}
+            </div>
+          </div>
+        </div>
+      {{/each}}
+    </div>
+  </div>
+{{/if}}
+
+</div>
