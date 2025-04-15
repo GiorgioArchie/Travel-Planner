@@ -252,8 +252,8 @@ document.addEventListener('DOMContentLoaded', async () => {
           try {
             const endDateObj = new Date(endDate);
             // Add one day to make it work with Toast UI Calendar
-            endDateObj.setDate(endDateObj.getDate() + 1);
-            calendarEvent.end = endDateObj.toISOString().split('T')[0] + 'T00:00:00';
+            endDateObj.setDate(endDateObj.getDate() + 0);
+            calendarEvent.end = endDateObj.toISOString().split('T')[0];
           } catch (e) {
             // Fallback
             calendarEvent.end = endDate.includes('T') ? endDate : `${endDate}T23:59:59`;
@@ -264,7 +264,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           calendarEvent.end = trip.end;
         } else {
           // Default to same day as start
-          calendarEvent.end = calendarEvent.start.split('T')[0] + 'T23:59:59';
+          calendarEvent.end = calendarEvent.start.split('T')[0];
         }
        
         return calendarEvent;
