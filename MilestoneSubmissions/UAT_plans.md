@@ -25,7 +25,7 @@
 
 **Test Data:** See `/docker-entrypoint-initdb.d/create.sql` and manual form input.
 
-**User Acceptance Testers:** tbd
+**User Acceptance Testers:** Gathering students from our other classes to test out our application, results tbd
 
 **Test Results:** To be recorded during execution week.
 
@@ -57,11 +57,11 @@
      - All created trips are listed correctly
      - No data is lost between page reloads or navigation
 
-**Test Data:** Trip entries with varying names, dates, and destinations added through both home and all trips pages.
+**Test Data:** Trip entries with varying names, dates, and destinations added through both home and all trips pages and added into trips table in travel_planner db.
 
 **Test Environment:** Localhost using Docker Compose
 
-**User Acceptance Testers:** tbd
+**User Acceptance Testers:** Gathering students from our other classes to test out our application, results tbd
 
 **Test Results:** To be recorded during execution week (screenshots and confirmations)
 
@@ -76,7 +76,7 @@
    - **Input:** Select a trip, enter comment: "It was fun."
    - **Expected Result:** Journal is saved, displayed under selected trip.
 
-2. **Add Journal with phtot**
+2. **Add Journal with photo**
    - **Input:** Comment + photo upload
    - **Expected Result:** Both comment and image are saved and displayed correctly.
 
@@ -84,11 +84,10 @@
    - **Input:** Select a trip, write comment, do not upload any photo
    - **Expected Result:** Journal is saved and displayed under trip, photo field remains empty.
 
-**Test Data:** Trip records pre-seeded.
+**Test Data:** Trip records pre-seeded.  Journal comment added into journals table and journal_to_image table and images added to the join table and images table
 
 **Test Environment:** Localhost
 
-**User Acceptance Testers:** tbd
+**User Acceptance Testers:** Gathering students from our other classes to test out our application, results tbd
 
 **Test Results:** Results and screenshots will be logged in final report.
-
