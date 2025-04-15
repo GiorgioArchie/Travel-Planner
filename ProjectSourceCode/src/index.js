@@ -233,7 +233,8 @@ title: 'Events'
 });
 });
 
-app.post('/events', isAuthenticated, async (req, res, next) => {
+/*app.post('/events', isAuthenticated, async (req, res, next) => {
+  console.log('got into /events post')
   res.render('pages/events', { 
     LoggedIn: true,
     username: req.session.user.username,
@@ -242,9 +243,10 @@ app.post('/events', isAuthenticated, async (req, res, next) => {
   const username    = req.session.user.username;
   console.log('username: ', username);
   const { event_id, start_time, end_time, city, country, activity, description } = req.body;
-
+  console.log('start_time: ', start_time);
+  console.log('end_time: ', end_time);
   if (!event_id || !start_time || !end_time || !city || !country || !activity || !description) {
-    return res.status(400).send('Start and end dates are required.');
+    return res.status(400).send('Start and end times are required.');
   }
 
   try {
@@ -265,6 +267,37 @@ app.post('/events', isAuthenticated, async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+});*/
+app.post('/events', isAuthenticated, async (req, res, next) => {
+  console.log('got into /events post');
+  
+  const username = req.session.user.username;
+  const { trip_id, start_time, end_time, city, country, activity, description } = req.body;
+  
+  // Adjust the validation to check for trip_id instead of event_id
+  if (!trip_id || !start_time || !end_time || !city || !country || !activity || !description) {
+    return res.status(400).send('All required fields must be provided.');
+  }
+
+  try {
+    // Insert into events. Assuming your 'events' table auto-generates a primary key (e.g., event_id)
+    const eventResult = await db.one(`
+      INSERT INTO events (start_time, end_time, city, country, activity, description)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING event_id
+    `, [start_time, end_time, city, country, activity, description]);
+    
+    // Now use the auto-generated event_id to create the association in trips_to_events.
+    await db.none(`
+      INSERT INTO trips_to_events (trip_id, event_id)
+      VALUES ($1, $2)
+    `, [trip_id, eventResult.event_id]);
+
+    // Redirect into the all trips page to see events rendered
+    res.redirect(`/trips/`);
+  } catch (err) {
+    next(err);
+  }
 });
 
 
@@ -281,17 +314,28 @@ app.get('/trips', isAuthenticated, async (req, res) => {
     const username = req.session.user.username;
 
     const trips = await db.any(`
-      SELECT t.*
+      SELECT t.trip_id, t.trip_name, t.date_start, t.date_end, t.city, t.country
       FROM trips t
       INNER JOIN users_to_trips ut ON t.trip_id = ut.trip_id
       WHERE ut.username = $1
     `, [username]);
+    
+     // For each trip, fetch associated events (activities)
+     for (let trip of trips) {
+      const events = await db.any(`
+        SELECT e.event_id, e.start_time, e.end_time, e.city, e.country, e.activity, e.description
+        FROM events e
+        INNER JOIN trips_to_events te ON e.event_id = te.event_id
+        WHERE te.trip_id = $1
+      `, [trip.trip_id]);
+      trip.events = events; // attach the events array to each trip object
+    }
 
     res.render('pages/trips', {
       LoggedIn: true,
       username: username,
       title: 'Trips',
-      trips: trips
+      trips: trips  // trips now include an "events" array
     });
   } catch (err) {
     console.error('Error querying trips:', err);
