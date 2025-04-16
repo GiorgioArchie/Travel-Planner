@@ -948,19 +948,18 @@ app.get('/api/trips', async (_req, res) => {
 app.delete('/trips/:tripId', async (req, res) => {
   const { tripId } = req.params;
   try {
-    const result = await pool.query('DELETE FROM trips WHERE trip_id = $1', [tripId]);
-
+    await db.query('DELETE FROM users_to_trips WHERE trip_id = $1', [tripId]);
+    const result = await db.query('DELETE FROM trips WHERE trip_id = $1', [tripId]);
+    console.log(result);
     // Check if the trip was deleted
-    if (result.rowCount > 0) {
-      res.status(200).send('Trip deleted successfully.');
-    } else {
-      res.status(404).send('Trip not found.');
-    }
+    res.status(200).send('Trip deleted successfully.');
+    
   } catch (err) {
     console.error('Error deleting trip:', err);
     res.status(500).send('Error deleting trip. Please try again.');
   }
 });
+
 
 
 //%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

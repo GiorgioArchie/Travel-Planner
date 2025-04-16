@@ -58,7 +58,7 @@
   {{#if trips.length}}
     <div class="row">
       {{#each trips}}
-        <div class="col-md-6 mb-4">
+        <div id="trip-{{trip_id}}" class="col-md-6 mb-4">
           <!-- Trip Card that takes up half the screen width -->
           <div class="card">
             <div class="card-body">
@@ -315,7 +315,7 @@
   })();
 
  
-  function deleteTrip(tripId) {
+ function deleteTrip(tripId) {
     // Store the tripId in a hidden variable or data attribute in the modal
     $('#deleteConfirmationModal').modal('show');  // Show the modal
 
@@ -332,7 +332,6 @@
           if (tripCard) {
             tripCard.remove();
           }
-          alert('Trip deleted successfully.');
           
           // Close the modal after successful deletion
           $('#deleteConfirmationModal').modal('hide');
@@ -347,5 +346,6 @@
       });
     };
   }
+
   
 </script>
