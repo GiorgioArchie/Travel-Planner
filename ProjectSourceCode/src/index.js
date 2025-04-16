@@ -11,23 +11,20 @@ const fileUpload = require('express-fileupload');
 
 // Set up handlebars
 const hbs = handlebars.create({
-  extname: 'hbs',
-  defaultLayout: 'main',
-  layoutsDir: path.join(__dirname, 'views/layouts'),
-  partialsDir: path.join(__dirname, 'views/partials'),
-  helpers: {
-    inc: function(value) {
-      return parseInt(value) + 1;
-    },
-    formatDate: function(dateStr) {
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    },
-    eq: (a, b) => a == b,
-    json: obj => JSON.stringify(obj, null, 2)
-  }
+extname: 'hbs',
+defaultLayout: 'main',
+layoutsDir: path.join(__dirname, 'views/layouts'),
+partialsDir: path.join(__dirname, 'views/partials'),
+helpers: {
+// Add any custom helpers here if needed
+  eq: (a, b) => a == b,
+  formatDate: function(dateStr) {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  },
+  json: obj => JSON.stringify(obj, null, 2),
+}
 });
-
 
 // Database configuration
 const dbConfig = {
@@ -236,6 +233,41 @@ title: 'Events'
 });
 });
 
+/*app.post('/events', isAuthenticated, async (req, res, next) => {
+  console.log('got into /events post')
+  res.render('pages/events', { 
+    LoggedIn: true,
+    username: req.session.user.username,
+   title: 'Events'
+  });
+  const username    = req.session.user.username;
+  console.log('username: ', username);
+  const { event_id, start_time, end_time, city, country, activity, description } = req.body;
+  console.log('start_time: ', start_time);
+  console.log('end_time: ', end_time);
+  if (!event_id || !start_time || !end_time || !city || !country || !activity || !description) {
+    return res.status(400).send('Start and end times are required.');
+  }
+
+  try {
+    // insert into trips, grab the auto‑gen trip_id
+    const { trip_id } = await db.one(`
+    INSERT INTO events (event_id, start_time, end_time, city, country, activity, description)
+    VALUES ($1, $2, $3, $4, $5, $6, $7)
+    RETURNING event_id
+    `, [event_id, start_time, end_time, city, country, activity, description]);
+
+    await db.none(`
+      INSERT INTO trips_to_events (trip_id, event_id)
+      VALUES ($1, $2)
+      `, [trip_id, event_id]);
+
+    // redirect into the "trip details" page
+    res.redirect(`/events/`);
+  } catch (err) {
+    next(err);
+  }
+});*/
 app.post('/events', isAuthenticated, async (req, res, next) => {
   console.log('got into /events post');
   
@@ -243,7 +275,7 @@ app.post('/events', isAuthenticated, async (req, res, next) => {
   const { trip_id, start_time, end_time, city, country, activity, description } = req.body;
   
   // Adjust the validation to check for trip_id instead of event_id
-  if (!trip_id || !start_time || !end_time || !city || !country || !activity) {
+  if (!trip_id || !start_time || !end_time || !city || !country || !activity || !description) {
     return res.status(400).send('All required fields must be provided.');
   }
 
@@ -262,7 +294,7 @@ app.post('/events', isAuthenticated, async (req, res, next) => {
     `, [trip_id, eventResult.event_id]);
 
     // Redirect into the all trips page to see events rendered
-    res.redirect('/trips?message=Event created successfully');
+    res.redirect(`/trips/`);
   } catch (err) {
     next(err);
   }
@@ -280,7 +312,6 @@ title: 'Calendar'
 app.get('/trips', isAuthenticated, async (req, res) => {
   try {
     const username = req.session.user.username;
-    const message = req.query.message || null;
 
     const trips = await db.any(`
       SELECT t.trip_id, t.trip_name, t.date_start, t.date_end, t.city, t.country
@@ -304,8 +335,7 @@ app.get('/trips', isAuthenticated, async (req, res) => {
       LoggedIn: true,
       username: username,
       title: 'Trips',
-      trips: trips,  // trips now include an "events" array
-      message: message
+      trips: trips  // trips now include an "events" array
     });
   } catch (err) {
     console.error('Error querying trips:', err);
@@ -316,110 +346,39 @@ app.get('/trips', isAuthenticated, async (req, res) => {
 // Consolidated route for adding a trip (non-API version)
 app.post('/trips', isAuthenticated, async (req, res, next) => {
   const username = req.session.user.username;
-  const { trip_name, date_start, date_end, city, country } = req.body;
+  console.log('[POST /trips] Processing trip creation with data:', req.body);
+  
+  const { trip_name, date_start, date_end } = req.body;
 
   if (!trip_name || !date_start || !date_end) {
+    console.error('[POST /trips] Missing required fields:', req.body);
     return res.status(400).send('Trip name, start and end dates are required.');
   }
 
   try {
+    // insert into trips, grab the auto-gen trip_id
     const { trip_id } = await db.one(`
-      INSERT INTO trips (trip_name, date_start, date_end, city, country)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO trips (trip_name, date_start, date_end)
+      VALUES ($1, $2, $3)
       RETURNING trip_id
-    `, [trip_name, date_start, date_end, city || null, country || null]);
+    `, [trip_name, date_start, date_end]);
+
+    console.log(`[POST /trips] Created trip with ID: ${trip_id}`);
 
     await db.none(`
       INSERT INTO users_to_trips (username, trip_id)
       VALUES ($1, $2)
     `, [username, trip_id]);
-    
+
     console.log(`[POST /trips] Linked trip_id ${trip_id} to username ${username}`);
+    
     // redirect to the trips page
-    res.redirect('/trips?message=Trip created successfully');
+    res.redirect('/trips');
   } catch (err) {
+    console.error('[POST /trips] Error creating trip:', err);
     next(err);
   }
 });
-
-app.get('/trips/:id', isAuthenticated, async (req, res) => {
-  const tripId = req.params.id;
-  const username = req.session.user.username;
-
-  try {
-    // Get trip info
-    const trip = await db.oneOrNone(`
-      SELECT * FROM trips 
-      WHERE trip_id = $1
-    `, [tripId]);
-
-    const ownershipCheck = await db.oneOrNone(`
-      SELECT * FROM users_to_trips 
-      WHERE trip_id = $1 AND username = $2
-    `, [tripId, username]);
-
-    if (!trip || !ownershipCheck) {
-      return res.status(403).send('You are not authorized to view this trip.');
-    }
-
-    // Get events
-    const events = await db.any(`
-      SELECT * FROM events 
-      JOIN trips_to_events ON events.event_id = trips_to_events.event_id 
-      WHERE trips_to_events.trip_id = $1
-    `, [tripId]);
-
-    // Get journals and associated images
-    const rawData = await db.any(`
-      SELECT 
-        j.journal_id, 
-        j.comments,
-        i.image_id, 
-        i.image_url
-      FROM journals j
-      LEFT JOIN journal_to_image ji ON j.journal_id = ji.journal_id
-      LEFT JOIN images i ON ji.image_id = i.image_id
-      WHERE j.trip_id = $1 AND j.username = $2
-      ORDER BY j.journal_id
-    `, [tripId, username]);
-
-    // Group journals by journal_id
-    const journalMap = new Map();
-    const journals = [];
-
-    for (const row of rawData) {
-      if (!journalMap.has(row.journal_id)) {
-        journalMap.set(row.journal_id, {
-          journal_id: row.journal_id,
-          comments: row.comments,
-          images: []
-        });
-        journals.push(journalMap.get(row.journal_id));
-      }
-
-      if (row.image_url) {
-        journalMap.get(row.journal_id).images.push({
-          image_id: row.image_id,
-          image_url: row.image_url
-        });
-      }
-    }
-
-    res.render('pages/tripdetail', {
-      LoggedIn: true,
-      username,
-      title: `Trip: ${trip.trip_name}`,
-      trip,
-      events,
-      journals
-    });
-  } catch (err) {
-    console.error('[GET /trips/:id] Error:', err);
-    res.status(500).send('Error loading trip details.');
-  }
-});
-
-
 
 // Route for map page
 app.get('/map', isAuthenticated, (req, res) => {
@@ -908,9 +867,9 @@ app.post('/journal/edit', isAuthenticated, async (req, res) => {
 
 
 
-//////////////////////////////////////////////////////////////////////////////////////////////
-//////////////// ADD THIS CALENDAR ROUTE TO YOUR EXISTING index.js ///////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////
+// ADD THIS CALENDAR ROUTE TO YOUR EXISTING index.js
+////////////////////////////////////////////////////
 
 /* ①  static files — put this BEFORE your routes */
 app.use(express.static(path.join(__dirname, 'public')));
@@ -924,6 +883,30 @@ app.get('/calendar', (req, res) => {
 app.get('/', (req, res) => {
   res.redirect('/calendar');
 });
+
+/*
+function rowToEvent(r) {
+  const endPlus1 = new Date(r.date_end);
+  endPlus1.setDate(endPlus1.getDate() + 1);          // ← ToastUI end is exclusive
+
+  return {
+    id:         r.trip_id.toString(),
+    calendarId: 'trips',            // must match a calendar you declared
+    title:      r.trip_name,
+    start:      `${r.date_start}T00:00:00`, // local midnight avoids TZ shift
+    end:        endPlus1.toISOString().slice(0,10) + 'T00:00:00',
+    isAllday:   true,
+    raw: { city: r.city, country: r.country }
+  };
+}
+
+
+app.get('/api/trips', async (_req, res) => {
+  const { rows } = await pool.query('SELECT * FROM trips');
+  res.json(rows.map(tripRowToEvent));
+});
+*/
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 /* 
   Helper function: Convert a row from the trips table 
@@ -949,61 +932,41 @@ function rowToEvent(r) {
   };
 }
 
-app.get('/api/user/current', isAuthenticated, (req, res) => {
-  // This endpoint simply returns the username from the session
-  res.json({
-    username: req.session.user.username
-  });
-});
 /* API route to fetch trips from the database */
-app.get('/api/trips', isAuthenticated, async (req, res) => {
+app.get('/api/trips', async (_req, res) => {
   try {
-    const username = req.session.user.username;
-    console.log('[GET /api/trips] Fetching trips for username:', username);
-   
-    const trips = await db.any(`
-      SELECT
-        t.trip_id,
-        t.trip_name,
-        t.date_start,
-        t.date_end,
-        t.city,
-        t.country,
-        d.id as destination_id,
-        u.username
-      FROM trips t
-      JOIN users_to_trips u ON t.trip_id = u.trip_id
-      LEFT JOIN destinations d ON (t.city = d.city AND t.country = d.country)
-      WHERE u.username = $1
-    `, [username]);
-   
-    console.log('[GET /api/trips] Retrieved trips with usernames:', trips.map(t => ({
-      trip_id: t.trip_id,
-      trip_name: t.trip_name,
-      username: t.username
-    })));
-   
-    // Map the trips to a consistent format
-    const formattedTrips = trips.map(trip => ({
-      id: trip.trip_id,
-      tripName: trip.trip_name,
-      destinationId: trip.destination_id,
-      startDate: trip.date_start,
-      endDate: trip.date_end,
-      city: trip.city,
-      country: trip.country,
-      destination: trip.city && trip.country ? `${trip.city}, ${trip.country}` : undefined,
-      username: trip.username || username // Make sure username is included
-    }));
-   
-    res.json(formattedTrips);
+    const { rows } = await pool.query('SELECT * FROM trips');
+    // Map the rows to event objects using rowToEvent
+    res.json(rows.map(rowToEvent));
   } catch (err) {
-    console.error('[GET /api/trips] Error fetching trips:', err);
-    res.status(500).json({ error: 'Failed to fetch trips', details: err.message });
+    console.error('GET /api/trips error:', err);
+    res.status(500).json({ error: 'db-error', message: err.message });
   }
 });
 
-//###############################################################################
+
+app.delete('/trips/:tripId', async (req, res) => {
+  const { tripId } = req.params;
+  try {
+    await db.query('DELETE FROM users_to_trips WHERE trip_id = $1', [tripId]);
+    const result = await db.query('DELETE FROM trips WHERE trip_id = $1', [tripId]);
+    console.log(result);
+    // Check if the trip was deleted
+      res.status(200).send('Trip deleted successfully.')
+    
+  } catch (err) {
+    console.error('Error deleting trip:', err);
+    res.status(500).send('Error deleting trip. Please try again.');
+  }
+});
+
+
+
+//%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+//###############################################################################//
+
+
 
 // Test welcome route
 app.get('/welcome', (req, res) => {
