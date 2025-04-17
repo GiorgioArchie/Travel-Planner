@@ -5,8 +5,69 @@
   </div>
 {{/if}}
 
-<main class="container mt-4 mb-5 p-3 rounded shadow-sm" style="background-color: #ffffff;">
-  <h2 class="mb-4 text-center">My Travel Journal</h2>
+<main class="container p-4 rounded shadow-sm" style="background-color: #ffffff;">
+  <h2 class="page-title mb-4">Travel Journal</h2>
+
+<style>
+  body {
+    background-color: #f8fcf9;
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    color: #000;
+  }
+
+  .container {
+    background-color: #ffffff;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05);
+    margin: 0 auto;
+  }
+
+  h2.page-title {
+    margin-top: 0;
+    text-align: center;
+    font-weight: bold;
+    color: #004d40;
+    font-size: 2rem;
+  }
+
+  .form-control {
+    background-color: #f4f7f6;
+    border: 1px solid #ccc;
+    color: #333;
+  }
+
+  .form-control::placeholder {
+    color: #888;
+  }
+
+  .btn-info {
+    background-color: #63c8b0;
+    border: none;
+    font-weight: 600;
+  }
+
+  .btn-info:hover {
+    background-color: #47b39c;
+  }
+
+  .alert-info {
+    background-color: #e8f9f3;
+    color: #1c5d4c;
+    border-left: 4px solid #4fb28c;
+  }
+
+  .card {
+    border-radius: 10px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .modal-content {
+    border-radius: 10px;
+  }
+</style>
+
 
   <!-- Trip Selection -->
   <form method="GET" action="/journal" class="mb-4 p-3 rounded shadow-sm" style="background-color: #f0f8ff;">
