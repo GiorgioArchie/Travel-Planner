@@ -1047,7 +1047,7 @@ app.delete('/trips/:tripId', async (req, res) => {
     const result = await db.query('DELETE FROM trips WHERE trip_id = $1', [tripId]);
     console.log(result);
     // Check if the trip was deleted
-      res.status(200).send('Trip deleted successfully.')
+    res.status(200).send('Trip deleted successfully.');
     
   } catch (err) {
     console.error('Error deleting trip:', err);

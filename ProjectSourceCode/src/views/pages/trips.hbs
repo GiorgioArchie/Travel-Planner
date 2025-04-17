@@ -102,30 +102,39 @@
 <div class="container">
   <h1>All Trips</h1>
   {{#if trips.length}}
-    <div class="row">
-      {{#each trips}}
-        <div id="trip-{{trip_id}}" class="col-md-6 mb-4">
-          <!-- Trip Card that takes up half the screen width -->
-          <div class="card">
-            <div class="card-body">
-              <h2 class="card-title">{{trip_name}}</h2>
-              <p><strong>Start Date:</strong> {{formatDate date_start}}</p>
-              <p><strong>End Date:</strong> {{formatDate date_end}}</p>
-              {{#if city}}<p><strong>City:</strong> {{city}}</p>{{/if}}
-              {{#if country}}<p><strong>Country:</strong> {{country}}</p>{{/if}}
-               <!-- List of Events/Activities associated with this trip -->
+  <div class="row">
+    {{#each trips}}
+      <div id="trip-{{trip_id}}" class="col-md-6 mb-4">
+        <!-- Trip Card that takes up half the screen width -->
+        <div class="card">
+          <div class="card-body d-flex flex-column">
+            <h2 class="card-title">{{trip_name}}</h2>
+            <p><strong>Start Date:</strong> {{formatDate date_start}}</p>
+            <p><strong>End Date:</strong> {{formatDate date_end}}</p>
+            {{#if city}}<p><strong>City:</strong> {{city}}</p>{{/if}}
+            {{#if country}}<p><strong>Country:</strong> {{country}}</p>{{/if}}
+
+            <!-- List of Events/Activities associated with this trip -->
+            <div class="mt-auto d-flex justify-content-between">
+              <!-- View Details button on the left -->
               <form action="/trips/{{this.trip_id}}" method="GET">
-              <button type="submit" class="btn btn-outline-info">
-              <i class="bi bi-eye"></i> View Details</button>
-            </form>
+                <button type="submit" class="btn btn-outline-info">
+                  <i class="bi bi-eye"></i> View Details
+                </button>
+              </form>
+
+              <!-- Delete Trip button on the right -->
+              <button class="btn btn-danger" onclick="deleteTrip({{this.trip_id}})">Delete Trip</button>
             </div>
           </div>
         </div>
-      {{/each}}
-    </div>
-  {{else}}
-    <p>No trips available.</p>
-  {{/if}}
+      </div>
+    {{/each}}
+  </div>
+{{else}}
+  <p>No trips available.</p>
+{{/if}}
+
              
             
   <div class="d-flex justify-content-end mb-4">
@@ -258,6 +267,7 @@
   })();
 
  
+ 
  function deleteTrip(tripId) {
     // Store the tripId in a hidden variable or data attribute in the modal
     $('#deleteConfirmationModal').modal('show');  // Show the modal
@@ -289,6 +299,7 @@
       });
     };
   }
+
 
   
 </script>
