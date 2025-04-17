@@ -223,51 +223,6 @@ const isAuthenticated = (req, res, next) => {
   }
   return res.status(401).send('Please log in to access this page');
 };
-
-// Route for events page (protected)
-app.get('/events', isAuthenticated, (req, res) => {
-res.render('pages/events', {
-LoggedIn: true,
-username: req.session.user.username,
-title: 'Events'
-});
-});
-
-/*app.post('/events', isAuthenticated, async (req, res, next) => {
-  console.log('got into /events post')
-  res.render('pages/events', { 
-    LoggedIn: true,
-    username: req.session.user.username,
-   title: 'Events'
-  });
-  const username    = req.session.user.username;
-  console.log('username: ', username);
-  const { event_id, start_time, end_time, city, country, activity, description } = req.body;
-  console.log('start_time: ', start_time);
-  console.log('end_time: ', end_time);
-  if (!event_id || !start_time || !end_time || !city || !country || !activity || !description) {
-    return res.status(400).send('Start and end times are required.');
-  }
-
-  try {
-    // insert into trips, grab the auto‑gen trip_id
-    const { trip_id } = await db.one(`
-    INSERT INTO events (event_id, start_time, end_time, city, country, activity, description)
-    VALUES ($1, $2, $3, $4, $5, $6, $7)
-    RETURNING event_id
-    `, [event_id, start_time, end_time, city, country, activity, description]);
-
-    await db.none(`
-      INSERT INTO trips_to_events (trip_id, event_id)
-      VALUES ($1, $2)
-      `, [trip_id, event_id]);
-
-    // redirect into the "trip details" page
-    res.redirect(`/events/`);
-  } catch (err) {
-    next(err);
-  }
-});*/
 app.post('/events', isAuthenticated, async (req, res, next) => {
   console.log('got into /events post');
   
@@ -294,12 +249,58 @@ app.post('/events', isAuthenticated, async (req, res, next) => {
     `, [trip_id, eventResult.event_id]);
 
     // Redirect into the all trips page to see events rendered
-    res.redirect(`/trips/`);
+    res.redirect(`/trips/${trip_id}?message=Event created successfully`);
   } catch (err) {
     next(err);
   }
 });
 
+app.post('/events/edit', isAuthenticated, async (req, res) => {
+  const { event_id, trip_id, start_time, end_time, city, country, activity, description } = req.body;
+
+  if (!event_id || !trip_id || !start_time || !end_time || !city || !country || !activity) {
+    return res.status(400).send('All required fields must be provided.');
+  }
+
+  try {
+    await db.none(`
+      UPDATE events
+      SET start_time = $1,
+          end_time = $2,
+          city = $3,
+          country = $4,
+          activity = $5,
+          description = $6
+      WHERE event_id = $7
+    `, [start_time, end_time, city, country, activity, description, event_id]);
+
+    res.redirect(`/trips/${trip_id}?message=Event updated successfully`);
+  } catch (err) {
+    console.error('[POST /events/edit] Error updating event:', err);
+    res.status(500).send('Failed to update event.');
+  }
+});
+
+app.post('/events/delete', isAuthenticated, async (req, res) => {
+  const { event_id, trip_id } = req.body;
+
+  if (!event_id || !trip_id) {
+    return res.status(400).send('Missing event ID or trip ID');
+  }
+
+  try {
+    // First remove from the join table
+    await db.none(`DELETE FROM trips_to_events WHERE event_id = $1`, [event_id]);
+
+    // Then delete the actual event
+    await db.none(`DELETE FROM events WHERE event_id = $1`, [event_id]);
+
+    res.redirect(`/trips/${trip_id}?message=Event deleted successfully`);
+  } catch (err) {
+    console.error('[POST /events/delete] Error:', err);
+    res.status(500).send('Error deleting event');
+  }
+});
 
 app.get('/calendar', isAuthenticated, (req, res) => {
 res.render('pages/calendar', {

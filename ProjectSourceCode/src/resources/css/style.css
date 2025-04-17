@@ -64,3 +64,13 @@ body {
     border-radius: 5px;
     cursor: pointer;
   }
+  .carousel-control-prev-icon,
+  .carousel-control-next-icon {
+    background-color: white;      /* gives circle background */
+    border-radius: 50%;
+    width: 3rem;
+    height: 3rem;
+    background-size: 80% 80%;
+    filter: invert(0%) brightness(0%) contrast(100%);
+  }
+  
