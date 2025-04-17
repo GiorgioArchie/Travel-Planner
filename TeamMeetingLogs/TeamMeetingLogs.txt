@@ -36,6 +36,21 @@ Giorgio: Adding Events form to all trips page
 Jack: Debug map pages with database
 Laura: Link Journal to SQL
 
+Internal Meeting 4:
+Done last week
+Alexander: Calendar page works and pulls from database, having issues with trips rendering correctly
+Arielle: added activities list to trip cards, and message to pop up after successfully adding trip/event
+Giorgio: created add event form/button, created delete trip button
+Jack: fixed SQL bugs with the home page
+Laura: journal page complete including upload photos and comments into trips saved to database
+
+To-Do's:
+Alexander: clean up calendar days of trips
+Arielle: style navbar, edit event, trips page event carasel 
+Giorgio: clean up trips page layout and display to add style, delete trip button added
+Jack: Check why trips created from all trips page, aren't displayed correctly into home page
+Laura: test cases, style journal page
+
 TA Meeting 1:
 Decisions made: trip data entity, event entity (day, time, duration, comments), main focus on interactive map, 
 
@@ -68,4 +83,19 @@ Arielle: Clean up trips page to show all attributes
 Giorgio: Adding Events form to all trips page
 Jack: Debug map pages with database
 Laura: Link Journal to SQL
+
+TA Meeting 4:
+Decisions made: Not using google calendar API, detail exactly what "trip", "events" and "journals"
+
+Alternative actions/options discussed: 
+
+Follow-up items, including agreed-on roles and responsibilities: new trip details page, all trips would be an overview, 
+front-end style, connect home page pins to database, 
+
+To-Do's:
+Alexander: clean up calendar days of trips, style calendar
+Arielle: style navbar, edit event, trips page event carasel, create trips detail page
+Giorgio: clean up trips page layout and display to add style, delete trip button added and functional
+Jack: debug the delete trip button on home page and add trip created from trip page onto home map
+Laura: test cases, style journal page
 
