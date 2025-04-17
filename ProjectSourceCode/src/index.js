@@ -16,14 +16,17 @@ defaultLayout: 'main',
 layoutsDir: path.join(__dirname, 'views/layouts'),
 partialsDir: path.join(__dirname, 'views/partials'),
 helpers: {
-// Add any custom helpers here if needed
-  eq: (a, b) => a == b,
+  inc: function(value) {
+    return parseInt(value) + 1;
+  },
   formatDate: function(dateStr) {
     const date = new Date(dateStr);
     return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   },
-  json: obj => JSON.stringify(obj, null, 2),
+  eq: (a, b) => a == b,
+  json: obj => JSON.stringify(obj, null, 2)
 }
+
 });
 
 // Database configuration
@@ -378,6 +381,83 @@ app.post('/trips', isAuthenticated, async (req, res, next) => {
   } catch (err) {
     console.error('[POST /trips] Error creating trip:', err);
     next(err);
+  }
+});
+
+app.get('/trips/:id', isAuthenticated, async (req, res) => {
+  const tripId = req.params.id;
+  const username = req.session.user.username;
+
+  try {
+    // Get trip info
+    const trip = await db.oneOrNone(`
+      SELECT * FROM trips 
+      WHERE trip_id = $1
+    `, [tripId]);
+
+    const ownershipCheck = await db.oneOrNone(`
+      SELECT * FROM users_to_trips 
+      WHERE trip_id = $1 AND username = $2
+    `, [tripId, username]);
+
+    if (!trip || !ownershipCheck) {
+      return res.status(403).send('You are not authorized to view this trip.');
+    }
+
+    // Get events
+    const events = await db.any(`
+      SELECT * FROM events 
+      JOIN trips_to_events ON events.event_id = trips_to_events.event_id 
+      WHERE trips_to_events.trip_id = $1
+    `, [tripId]);
+
+    // Get journals and associated images
+    const rawData = await db.any(`
+      SELECT 
+        j.journal_id, 
+        j.comments,
+        i.image_id, 
+        i.image_url
+      FROM journals j
+      LEFT JOIN journal_to_image ji ON j.journal_id = ji.journal_id
+      LEFT JOIN images i ON ji.image_id = i.image_id
+      WHERE j.trip_id = $1 AND j.username = $2
+      ORDER BY j.journal_id
+    `, [tripId, username]);
+
+    // Group journals by journal_id
+    const journalMap = new Map();
+    const journals = [];
+
+    for (const row of rawData) {
+      if (!journalMap.has(row.journal_id)) {
+        journalMap.set(row.journal_id, {
+          journal_id: row.journal_id,
+          comments: row.comments,
+          images: []
+        });
+        journals.push(journalMap.get(row.journal_id));
+      }
+
+      if (row.image_url) {
+        journalMap.get(row.journal_id).images.push({
+          image_id: row.image_id,
+          image_url: row.image_url
+        });
+      }
+    }
+
+    res.render('pages/tripdetail', {
+      LoggedIn: true,
+      username,
+      title: `Trip: ${trip.trip_name}`,
+      trip,
+      events,
+      journals
+    });
+  } catch (err) {
+    console.error('[GET /trips/:id] Error:', err);
+    res.status(500).send('Error loading trip details.');
   }
 });
 
