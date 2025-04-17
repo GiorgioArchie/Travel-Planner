@@ -226,6 +226,7 @@ const isAuthenticated = (req, res, next) => {
   }
   return res.status(401).send('Please log in to access this page');
 };
+
 app.post('/events', isAuthenticated, async (req, res, next) => {
   console.log('got into /events post');
   
@@ -233,7 +234,7 @@ app.post('/events', isAuthenticated, async (req, res, next) => {
   const { trip_id, start_time, end_time, city, country, activity, description } = req.body;
   
   // Adjust the validation to check for trip_id instead of event_id
-  if (!trip_id || !start_time || !end_time || !city || !country || !activity || !description) {
+  if (!trip_id || !start_time || !end_time || !city || !country || !activity) {
     return res.status(400).send('All required fields must be provided.');
   }
 

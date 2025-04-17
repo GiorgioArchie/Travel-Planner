@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS journals (
   journal_id SERIAL PRIMARY KEY,
   trip_id INTEGER REFERENCES trips(trip_id),
   username VARCHAR(50) REFERENCES users(username),
-  comments VARCHAR(500)
+  comments VARCHAR(5000)
 );
 
 -- Create events to journals relationship table
