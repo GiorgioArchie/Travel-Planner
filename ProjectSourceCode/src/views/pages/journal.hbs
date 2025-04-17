@@ -1,49 +1,51 @@
-{{> message }}
-{{#if message}} <!--maybe-->
-  <div class="alert alert-success">{{message}}</div>
-{{/if}} <!--maybe-->
+{{#if message}}
+  <div id="flash-message" class="alert alert-info text-center p-3 my-3 rounded shadow-sm" 
+       style="max-width: 600px; margin: 0 auto;">
+    ✈️ {{message}}
+  </div>
+{{/if}}
 
 <main class="container mt-4 mb-5">
-  <h2 class="mb-4">My Journal</h2>
+  <h2 class="mb-4 text-center">My Travel Journal</h2>
 
   <!-- Trip Selection -->
-  <form method="GET" action="/journal" class="mb-4">
-    <label for="trip-select">Select Trip:</label>
-    <select name="tripId" id="trip-select" class="form-select" required>
+  <form method="GET" action="/journal" class="mb-4 p-3 rounded shadow-sm" style="background-color: #f0f8ff;">
+    <label for="trip-select" class="form-label fw-bold">Select a Trip:</label>
+    <select name="tripId" id="trip-select" class="form-select mb-2" required>
       <option value="" disabled selected>-- Please select a trip --</option>
       {{#each trips}}
         <option value="{{this.id}}" {{#if (eq ../selectedTripId this.id)}}selected{{/if}}>
-          {{this.city}}, {{this.country}} ({{formatDate this.date_start}})
+          {{this.trip_name}} — {{this.city}}, {{this.country}} ({{formatDate this.date_start}})
         </option>
       {{/each}}
     </select>
-    <button type="submit" class="btn btn-primary mt-2">View</button>
+    <button type="submit" class="btn btn-info">View</button>
   </form>
 
   <!-- Show Journal Entries -->
   {{#if journalData.length}}
     {{#each journalData}}
-      <div class="card mb-3">
+      <div class="card mb-4 shadow-sm">
         <div class="card-body">
-          <p>{{this.comments}}</p>
+          <p class="card-text">{{this.comments}}</p>
 
           {{#if this.images.length}}
             <div class="d-flex flex-wrap gap-2 mb-2">
               {{#each this.images}}
-                <img src="{{this.image_url}}" alt="" class="img-thumbnail me-2 mb-2" style="max-width: 200px;" />
+                <img src="{{this.image_url}}" alt="Uploaded photo" class="img-thumbnail me-2 mb-2" style="max-width: 200px;" />
               {{/each}}
             </div>
           {{/if}}
 
-
           <!-- Edit & Delete buttons -->
-          <button type="button" class="btn btn-secondary btn-sm" data-toggle="modal" data-target="#editModal-{{this.journal_id}}">Edit</button>
-
-          <form action="/journal/delete" method="POST" class="d-inline">
-            <input type="hidden" name="journalId" value="{{this.journal_id}}" />
-            <input type="hidden" name="tripId" value="{{../selectedTripId}}" />
-            <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this journal?');">Delete</button>
-          </form>
+          <div class="d-flex gap-2">
+            <button type="button" class="btn btn-outline-primary btn-sm" data-toggle="modal" data-target="#editModal-{{this.journal_id}}">Edit</button>
+            <form action="/journal/delete" method="POST" class="d-inline">
+              <input type="hidden" name="journalId" value="{{this.journal_id}}" />
+              <input type="hidden" name="tripId" value="{{../selectedTripId}}" />
+              <button type="submit" class="btn btn-outline-danger btn-sm" onclick="return confirm('Are you sure you want to delete this journal?');">Delete</button>
+            </form>
+          </div>
         </div>
       </div>
 
@@ -52,7 +54,6 @@
         <div class="modal-dialog" role="document">
           <div class="modal-content">
             <form action="/journal/edit" method="POST" enctype="multipart/form-data">
-    
               <div class="modal-header">
                 <h5 class="modal-title" id="editModalLabel-{{this.journal_id}}">Edit Journal Entry</h5>
                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
@@ -62,64 +63,68 @@
               <div class="modal-body">
                 <input type="hidden" name="journalId" value="{{this.journal_id}}" />
                 <input type="hidden" name="tripId" value="{{../selectedTripId}}" />
-                <div class="form-group">
+
+                <div class="form-group mb-3">
                   <label for="comment">Journal Entry:</label>
                   <textarea class="form-control" name="comment" rows="4" required>{{this.comments}}</textarea>
                 </div>
 
                 <div class="form-group mb-2">
                   <label for="photo">Upload New Photo (optional):</label>
-                  <input type="file" name="photos" id="photo" class="form-control" accept="image/*" multiple />
+                  <input type="file" name="photos" class="form-control" accept="image/*" multiple />
                 </div>
-
               </div>
               <div class="modal-footer">
-                <button type="submit" class="btn btn-primary">Save Changes</button>
+                <button type="submit" class="btn btn-info">Save Changes</button>
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
               </div>
             </form>
           </div>
         </div>
       </div>
-
     {{/each}}
 
   {{else if selectedTripId}}
-    <div class="alert alert-info">No journal entries for this trip. Add your first entry below!</div>
+    <div class="alert alert-info text-center">No journal entries yet for this trip. Add one below!</div>
 
     <!-- Add Journal Form -->
-    <form action="/journal/add" method="POST" enctype="multipart/form-data" class="mt-4">
+    <form action="/journal/add" method="POST" enctype="multipart/form-data" class="mt-4 p-3 border rounded bg-light">
       <input type="hidden" name="tripId" value="{{selectedTripId}}" />
 
-      <div class="form-group mb-2">
-        <label for="comment">Journal Entry:</label>
+      <div class="form-group mb-3">
+        <label for="comment" class="form-label">Journal Entry:</label>
         <textarea class="form-control" name="comment" id="comment" rows="4" required></textarea>
       </div>
 
-      <div class="form-group mb-2">
-        <label for="photo">Upload Photo (optional):</label>
-        <input type="file" name="photos" id="photos" class="form-control" accept="image/*" multiple />
+      <div class="form-group mb-3">
+        <label for="photos" class="form-label">Upload Photo (optional):</label>
+        <input type="file" name="photos" class="form-control" accept="image/*" multiple />
       </div>
 
       <button type="submit" class="btn btn-success">Add Journal Entry</button>
     </form>
 
   {{else}}
-    <div class="alert alert-info">
-      Select a trip to view or add journal entries.
+    <div class="alert alert-info text-center">
+      Please select a trip to view or add journal entries.
     </div>
   {{/if}}
 </main>
 
-{{!-- Add a helper to format dates if needed --}}
 <script>
-  // Optional: Add date formatting if server-side handlebars doesn't handle it
-  function formatDate(dateString) {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { 
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
-    });
-  }
+  window.addEventListener('DOMContentLoaded', () => {
+    const flash = document.getElementById('flash-message');
+    if (flash) {
+      setTimeout(() => {
+        flash.style.transition = 'opacity 0.5s ease-out';
+        flash.style.opacity = '0';
+
+        setTimeout(() => {
+          if (flash.parentNode) {
+            flash.parentNode.removeChild(flash);
+          }
+        }, 500);
+      }, 1500); // 3 seconds
+    }
+  });
 </script>
