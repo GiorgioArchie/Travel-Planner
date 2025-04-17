@@ -31,112 +31,46 @@ document.addEventListener('DOMContentLoaded', async () => {
       useDetailPopup: true,
       isReadOnly: true, // Make calendar read-only to prevent cell selection
       template: {
-        // Customize what shows in the calendar item
-        allday: function(schedule) {
-          return schedule.title;
-        },
-        // FIXED DATE FORMATTER
-        // This function goes inside your template object in calendar.js
-        // ONLY replace the popupDetailDate function in your calendar.js file
-
-        popupDetailDate: function(isAllDay, start, end) {
-          try {
-            // Convert the date parameters to string format
-            let startStr = '';
-            let endStr = '';
-            
-            // Handle start date
-            if (start) {
-              if (typeof start === 'string') {
-                // If already a string, use it directly
-                startStr = start.split('T')[0]; // Remove time component if present
-              } else if (start._date) {
-                // If it's a TUI Calendar object with _date property
-                startStr = start._date.toString().split('T')[0];
-              } else {
-                // Last resort - convert whatever we have to string
-                startStr = start.toString().split('T')[0];
-              }
-            }
-            
-            // Handle end date
-            if (end) {
-              if (typeof end === 'string') {
-                // If already a string, use it directly
-                endStr = end.split('T')[0]; // Remove time component if present
-              } else if (end._date) {
-                // If it's a TUI Calendar object with _date property
-                endStr = end._date.toString().split('T')[0];
-              } else {
-                // Last resort - convert whatever we have to string
-                endStr = end.toString().split('T')[0];
-              }
-            }
-            
-            // Format as MM/DD/YYYY if possible
-            const formatDate = function(dateStr) {
-              try {
-                if (!dateStr) return '';
-                
-                const parts = dateStr.split('-');
-                if (parts.length === 3) {
-                  // If it's in YYYY-MM-DD format
-                  return `${parseInt(parts[1])}/${parseInt(parts[2])}/${parts[0]}`;
-                }
-                
-                // Otherwise just return as is
-                return dateStr;
-              } catch (e) {
-                return dateStr;
-              }
-            };
-            
-            // Format both dates
-            const formattedStart = formatDate(startStr);
-            const formattedEnd = formatDate(endStr);
-            
-            // Display appropriate date or date range
-            if (formattedStart && formattedEnd) {
-              if (formattedStart === formattedEnd) {
-                return formattedStart;
-              }
-              return `${formattedStart} - ${formattedEnd}`;
-            } else if (formattedStart) {
-              return formattedStart;
-            } else if (formattedEnd) {
-              return formattedEnd;
-            }
-          } catch (e) {
-            console.error('Error in date formatting:', e);
-          }
-          
-          return 'Trip date';
-        },
-        popupDetailLocation: function(schedule) {
-          // Display destination in location field
-          if (schedule.raw) {
-            if (schedule.raw.city || schedule.raw.country) {
-              return `${schedule.raw.city || ''} ${schedule.raw.country ? ', ' + schedule.raw.country : ''}`;
-            } else if (schedule.raw.destination) {
-              return schedule.raw.destination;
-            }
-          }
-          return schedule.location || 'No destination specified';
-        },
-        popupDetailAttendees: function(schedule) {
-          // Use the username from the data attribute
-          return username;
-        },
-        popupDetailState: function(schedule) {
-          return schedule.state || 'Trip';
-        },
-        popupDetailBody: function(schedule) {
-          if (schedule.raw && schedule.raw.description) {
-            return schedule.raw.description;
-          }
-          return '';
+        popupDetailSchedule: function(schedule) {
+          const formatDate = (d) =>
+            d
+              ? d.toLocaleDateString('en-US', {
+                  month: 'long',
+                  day: 'numeric',
+                  year: 'numeric'
+                })
+              : 'Unknown';
+      
+          const start = schedule.start?.toDate?.();
+          const end = schedule.end?.toDate?.();
+      
+          const dateRange =
+            start && end
+              ? formatDate(start) === formatDate(end)
+                ? formatDate(start)
+                : `${formatDate(start)} – ${formatDate(end)}`
+              : 'Trip date';
+      
+          const location =
+            schedule.location ||
+            schedule.raw?.destination ||
+            (schedule.raw?.city && schedule.raw?.country
+              ? `${schedule.raw.city}, ${schedule.raw.country}`
+              : 'No location');
+      
+          const attendees = schedule.attendees?.join(', ') || 'N/A';
+          const description = schedule.raw?.description || '';
+      
+          return `
+            <strong>${schedule.title}</strong><br>
+            📅 ${dateRange}<br>
+            📍 ${location}<br>
+            👥 ${attendees}<br>
+            📝 ${description}
+          `;
         }
       }
+      
     });
    
     // Disable default click behavior that selects/highlights cells
@@ -224,75 +158,50 @@ document.addEventListener('DOMContentLoaded', async () => {
      
       // Process trips into calendar events
       const calendarEvents = tripsData.map((trip, index) => {
-        console.log("Processing trip:", trip);
-       
-        // Get trip ID
-        const tripId = trip.id || trip.trip_id;
-       
-        // Get trip name
-        let tripName = trip.trip_name || trip.tripName || trip.title || 'Unnamed Trip';
-       
-        // Create calendar event with the category matching this trip's ID
-        const calendarEvent = {
+        const tripId = trip.id || trip.trip_id || `trip-${index}`;
+        const tripName = trip.trip_name || trip.tripName || trip.title || 'Unnamed Trip';
+      
+        const startDateStr = trip.date_start || trip.startDate || trip.start;
+        const endDateStr = trip.date_end || trip.endDate || trip.end || startDateStr;
+      
+        // Convert to ISO strings
+        const startISO = startDateStr
+          ? new Date(startDateStr).toISOString()
+          : new Date().toISOString();
+      
+        const endISO = endDateStr
+          ? new Date(new Date(endDateStr).getTime()).toISOString()
+          : new Date(new Date(startDateStr || new Date()).getTime()).toISOString();
+      
+        return {
           id: `trip-${tripId}-event`,
-          calendarId: `trip-${tripId}`, // This links to the category we created
+          calendarId: `trip-${tripId}`,
           title: tripName,
           isAllday: true,
           category: 'allday',
-          location: (trip.city && trip.country) ? `${trip.city}, ${trip.country}` : (trip.destination || ''),
+          start: startISO,
+          end: endISO,
+          location: (trip.city && trip.country)
+            ? `${trip.city}, ${trip.country}`
+            : (trip.destination || ''),
           state: 'Trip',
-          attendees: [username] // Use our username
-        };
-       
-        // Store the username directly in the raw data as well
-        calendarEvent.raw = {
-          type: 'trip',
-          username: username,
-          city: trip.city || '',
-          country: trip.country || '',
-          destination: trip.destination || ''
-        };
-       
-        // IMPROVED START DATE HANDLING
-        if (trip.date_start || trip.startDate) {
-          const startDate = trip.date_start || trip.startDate;
-          // Make sure it's a full datetime string with time component
-          calendarEvent.start = startDate.includes('T') ? startDate : `${startDate}T00:00:00`;
-          console.log(`Trip ${tripId} start date:`, calendarEvent.start);
-        } else if (trip.start) {
-          calendarEvent.start = trip.start;
-        } else {
-          calendarEvent.start = new Date().toISOString().split('T')[0] + 'T00:00:00';
-        }
-       
-        // IMPROVED END DATE HANDLING
-        if (trip.date_end || trip.endDate) {
-          const endDate = trip.date_end || trip.endDate;
-         
-          // For Toast UI Calendar's all-day events, the end date is exclusive
-          // So we need to add one day to make it inclusive
-          try {
-            const endDateObj = new Date(endDate);
-            // Add one day to make it work with Toast UI Calendar
-            endDateObj.setDate(endDateObj.getDate() + 0);
-            calendarEvent.end = endDateObj.toISOString().split('T')[0];
-          } catch (e) {
-            // Fallback
-            calendarEvent.end = endDate.includes('T') ? endDate : `${endDate}T23:59:59`;
+          attendees: [username],
+          raw: {
+            type: 'trip',
+            username: username,
+            city: trip.city || '',
+            country: trip.country || '',
+            destination: trip.destination || '',
+            date_start: startDateStr,
+            date_end: endDateStr
           }
-         
-          console.log(`Trip ${tripId} end date:`, calendarEvent.end);
-        } else if (trip.end) {
-          calendarEvent.end = trip.end;
-        } else {
-          // Default to same day as start
-          calendarEvent.end = calendarEvent.start.split('T')[0];
-        }
-       
-        return calendarEvent;
+        };
       });
+      
+      
      
       // Add events to calendar
+      console.log("Final calendarEvents being created:", calendarEvents);
       calendar.createEvents(calendarEvents);
       console.log(`Added ${calendarEvents.length} events to calendar`);
     } catch (error) {
