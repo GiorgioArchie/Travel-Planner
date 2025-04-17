@@ -666,8 +666,22 @@ app.delete('/api/trips/:id', isAuthenticated, async (req, res) => {
       return res.status(404).json({ error: 'Trip not found or unauthorized' });
     }
     
-    // Delete trip (cascading will handle related records)
-    await db.none('DELETE FROM trips WHERE trip_id = $1', [id]);
+    // Start a transaction to ensure all related records are properly removed
+    await db.tx(async t => {
+      // 1. First delete any events associated with this trip
+      await t.none('DELETE FROM trips_to_events WHERE trip_id = $1', [id]);
+      
+      // 2. Delete any journals associated with this trip
+      await t.none('DELETE FROM journals WHERE trip_id = $1', [id]);
+      
+      // 3. Delete the user-trip association
+      await t.none('DELETE FROM users_to_trips WHERE trip_id = $1 AND username = $2', [id, username]);
+      
+      // 4. Finally delete the trip itself
+      await t.none('DELETE FROM trips WHERE trip_id = $1', [id]);
+    });
+    
+    console.log(`[DELETE /api/trips] Successfully deleted trip ID: ${id}`);
     res.status(200).json({ message: 'Trip deleted successfully' });
   } catch (err) {
     console.error('[DELETE /api/trips] Error deleting trip:', err);
