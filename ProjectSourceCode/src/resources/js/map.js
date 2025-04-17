@@ -494,6 +494,9 @@ function removeTrip(id) {
     const index = trips.findIndex(t => Number(t.id) === Number(id));
     
     if (index !== -1) {
+      // Get the destination ID associated with this trip before removing it
+      const destinationId = trips[index].destinationId;
+      
       // Remove from trips array
       trips.splice(index, 1);
       
@@ -503,8 +506,25 @@ function removeTrip(id) {
         listItem.remove();
       }
       
-      // Update marker info windows
-      updateAllMarkerInfoWindows();
+      // Check if there are any other trips associated with this destination
+      const otherTripsWithDestination = trips.filter(t => Number(t.destinationId) === Number(destinationId));
+      
+      if (otherTripsWithDestination.length === 0) {
+        // No other trips use this destination, we can update the marker's info window
+        // to show "No trips planned for this destination"
+        const marker = markers.find(m => Number(m.destinationId) === Number(destinationId));
+        if (marker) {
+          // Find the destination for this marker
+          const destination = destinations.find(d => Number(d.id) === Number(destinationId));
+          if (destination) {
+            // Update the info window content
+            marker.infoWindow.setContent(getInfoWindowContent(destination));
+          }
+        }
+      } else {
+        // There are still other trips using this destination, just update the info window
+        updateAllMarkerInfoWindows();
+      }
     }
   })
   .catch(error => {

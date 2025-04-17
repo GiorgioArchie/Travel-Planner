@@ -36,59 +36,81 @@ document.addEventListener('DOMContentLoaded', async () => {
           return schedule.title;
         },
         // FIXED DATE FORMATTER
+        // This function goes inside your template object in calendar.js
+        // ONLY replace the popupDetailDate function in your calendar.js file
+
         popupDetailDate: function(isAllDay, start, end) {
-          console.log("Date formatter inputs:", { isAllDay, start, end });
-         
           try {
-            // Convert start and end to Date objects if they're strings
-            let startDate, endDate;
-           
-            if (typeof start === 'string') {
-              startDate = new Date(start);
-            } else {
-              startDate = start;
-            }
-           
-            if (typeof end === 'string') {
-              endDate = new Date(end);
-            } else {
-              endDate = end;
-            }
-           
-            // For all-day events, the end date is exclusive, so subtract 1 day
-            if (isAllDay) {
-              endDate = new Date(endDate);
-              endDate.setDate(endDate.getDate() - 1);
-            }
-           
-            // Format dates as MM/DD/YYYY
-            const formatDate = (date) => {
-              if (!date || isNaN(date.getTime())) {
-                return "Invalid date";
+            // Convert the date parameters to string format
+            let startStr = '';
+            let endStr = '';
+            
+            // Handle start date
+            if (start) {
+              if (typeof start === 'string') {
+                // If already a string, use it directly
+                startStr = start.split('T')[0]; // Remove time component if present
+              } else if (start._date) {
+                // If it's a TUI Calendar object with _date property
+                startStr = start._date.toString().split('T')[0];
+              } else {
+                // Last resort - convert whatever we have to string
+                startStr = start.toString().split('T')[0];
               }
-             
-              const month = date.getMonth() + 1;
-              const day = date.getDate();
-              const year = date.getFullYear();
-             
-              return `${month}/${day}/${year}`;
-            };
-           
-            const startStr = formatDate(startDate);
-            const endStr = formatDate(endDate);
-           
-            // If start and end dates are the same, just show one date
-            if (startStr === endStr) {
-              return startStr;
             }
-           
-            // Otherwise show the date range
-            return `${startStr} - ${endStr}`;
+            
+            // Handle end date
+            if (end) {
+              if (typeof end === 'string') {
+                // If already a string, use it directly
+                endStr = end.split('T')[0]; // Remove time component if present
+              } else if (end._date) {
+                // If it's a TUI Calendar object with _date property
+                endStr = end._date.toString().split('T')[0];
+              } else {
+                // Last resort - convert whatever we have to string
+                endStr = end.toString().split('T')[0];
+              }
+            }
+            
+            // Format as MM/DD/YYYY if possible
+            const formatDate = function(dateStr) {
+              try {
+                if (!dateStr) return '';
+                
+                const parts = dateStr.split('-');
+                if (parts.length === 3) {
+                  // If it's in YYYY-MM-DD format
+                  return `${parseInt(parts[1])}/${parseInt(parts[2])}/${parts[0]}`;
+                }
+                
+                // Otherwise just return as is
+                return dateStr;
+              } catch (e) {
+                return dateStr;
+              }
+            };
+            
+            // Format both dates
+            const formattedStart = formatDate(startStr);
+            const formattedEnd = formatDate(endStr);
+            
+            // Display appropriate date or date range
+            if (formattedStart && formattedEnd) {
+              if (formattedStart === formattedEnd) {
+                return formattedStart;
+              }
+              return `${formattedStart} - ${formattedEnd}`;
+            } else if (formattedStart) {
+              return formattedStart;
+            } else if (formattedEnd) {
+              return formattedEnd;
+            }
           } catch (e) {
-            console.error("Error formatting dates:", e);
-            console.log("Raw date values:", { start, end });
-            return "Date error";
+            console.error('Error in date formatting:', e);
           }
+          
+          return 'Trip date';
         },
         popupDetailLocation: function(schedule) {
           // Display destination in location field
