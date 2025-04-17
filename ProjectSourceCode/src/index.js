@@ -682,12 +682,12 @@ app.get('/journal', isAuthenticated, async (req, res) => {
     const message = req.query.message || null;
 
     const trips = await db.any(
-      `SELECT trips.trip_id AS id, city, country, date_start, date_end
+      `SELECT trips.trip_id AS id, trip_name, city, country, date_start, date_end
        FROM trips
        JOIN users_to_trips ON trips.trip_id = users_to_trips.trip_id
        WHERE users_to_trips.username = $1`,
       [username]
-    );
+    );    
 
     let journalData = [];
 
