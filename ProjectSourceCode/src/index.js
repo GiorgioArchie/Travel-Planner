@@ -316,6 +316,15 @@ title: 'Calendar'
 app.get('/trips', isAuthenticated, async (req, res) => {
   try {
     const username = req.session.user.username;
+    const message = req.session.message || null;
+    
+    // Clear the message after retrieving it
+    if (req.session.message) {
+      req.session.message = null;
+    }
+
+    // Get the Google Maps API key
+    const mapApiKey = process.env.API_KEY || '';
 
     const trips = await db.any(`
       SELECT t.trip_id, t.trip_name, t.date_start, t.date_end, t.city, t.country
@@ -324,8 +333,8 @@ app.get('/trips', isAuthenticated, async (req, res) => {
       WHERE ut.username = $1
     `, [username]);
     
-     // For each trip, fetch associated events (activities)
-     for (let trip of trips) {
+    // For each trip, fetch associated events (activities)
+    for (let trip of trips) {
       const events = await db.any(`
         SELECT e.event_id, e.start_time, e.end_time, e.city, e.country, e.activity, e.description
         FROM events e
@@ -339,7 +348,9 @@ app.get('/trips', isAuthenticated, async (req, res) => {
       LoggedIn: true,
       username: username,
       title: 'Trips',
-      trips: trips  // trips now include an "events" array
+      trips: trips,  // trips now include an "events" array
+      message: message,  // Pass any flash messages
+      mapApiKey: mapApiKey  // Pass the API key for geocoding
     });
   } catch (err) {
     console.error('Error querying trips:', err);
@@ -348,39 +359,114 @@ app.get('/trips', isAuthenticated, async (req, res) => {
 });
 
 // Consolidated route for adding a trip (non-API version)
+// Modified trip creation route in index.js
 app.post('/trips', isAuthenticated, async (req, res, next) => {
   const username = req.session.user.username;
   console.log('[POST /trips] Processing trip creation with data:', req.body);
   
-  const { trip_name, date_start, date_end, city, country } = req.body;
+  const { trip_name, date_start, date_end, city, country, latitude, longitude } = req.body;
 
   if (!trip_name || !date_start || !date_end || !city || !country) {
     console.error('[POST /trips] Missing required fields:', req.body);
     return res.status(400).send('Trip name, start and end dates, city and country are required.');
   }
 
+  // Use provided coordinates or defaults
+  const lat = latitude ? parseFloat(latitude) : 0;
+  const lng = longitude ? parseFloat(longitude) : 0;
+  
+  console.log(`[POST /trips] Using coordinates: lat=${lat}, lng=${lng} for ${city}, ${country}`);
+
   try {
-    // insert into trips, grab the auto-gen trip_id
-    const { trip_id } = await db.one(`
-      INSERT INTO trips (trip_name, date_start, date_end, city, country)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING trip_id
-    `, [trip_name, date_start, date_end, city, country]);
+    // Start a transaction for both trip and destination creation
+    await db.tx(async t => {
+      // 1. Insert into trips, grab the auto-gen trip_id
+      const { trip_id } = await t.one(`
+        INSERT INTO trips (trip_name, date_start, date_end, city, country)
+        VALUES ($1, $2, $3, $4, $5)
+        RETURNING trip_id
+      `, [trip_name, date_start, date_end, city, country]);
 
-    console.log(`[POST /trips] Created trip with ID: ${trip_id}`);
+      console.log(`[POST /trips] Created trip with ID: ${trip_id}`);
 
-    await db.none(`
-      INSERT INTO users_to_trips (username, trip_id)
-      VALUES ($1, $2)
-    `, [username, trip_id]);
+      // 2. Link user to trip
+      await t.none(`
+        INSERT INTO users_to_trips (username, trip_id)
+        VALUES ($1, $2)
+      `, [username, trip_id]);
 
-    console.log(`[POST /trips] Linked trip_id ${trip_id} to username ${username}`);
+      console.log(`[POST /trips] Linked trip_id ${trip_id} to username ${username}`);
+      
+      // 3. Check if this destination already exists
+      const existingDest = await t.oneOrNone(`
+        SELECT id, latitude, longitude FROM destinations 
+        WHERE city = $1 AND country = $2
+      `, [city, country]);
+      
+      let destinationId;
+      
+      if (!existingDest) {
+        // Create destination with coordinates
+        const destResult = await t.one(`
+          INSERT INTO destinations (city, country, latitude, longitude)
+          VALUES ($1, $2, $3, $4)
+          RETURNING id
+        `, [city, country, lat, lng]);
+        
+        destinationId = destResult.id;
+        console.log(`[POST /trips] Created new destination with ID: ${destinationId} at coordinates: ${lat}, ${lng}`);
+      } else {
+        destinationId = existingDest.id;
+        
+        // If existing destination has default coordinates (0,0) but we now have real ones, update it
+        if ((existingDest.latitude === 0 && existingDest.longitude === 0) && (lat !== 0 || lng !== 0)) {
+          await t.none(`
+            UPDATE destinations
+            SET latitude = $1, longitude = $2
+            WHERE id = $3
+          `, [lat, lng, destinationId]);
+          
+          console.log(`[POST /trips] Updated coordinates for existing destination ID: ${destinationId} to ${lat}, ${lng}`);
+        } else {
+          console.log(`[POST /trips] Using existing destination with ID: ${destinationId}`);
+        }
+      }
+      
+      // 4. Associate user with the destination
+      const userDestCheck = await t.oneOrNone(`
+        SELECT * FROM users_to_destinations 
+        WHERE username = $1 AND destination_id = $2
+      `, [username, destinationId]);
+      
+      if (!userDestCheck) {
+        await t.none(`
+          INSERT INTO users_to_destinations (username, destination_id)
+          VALUES ($1, $2)
+        `, [username, destinationId]);
+        
+        console.log(`[POST /trips] Linked destination_id ${destinationId} to username ${username}`);
+      } else {
+        console.log(`[POST /trips] User ${username} already associated with destination ${destinationId}`);
+      }
+    });
     
-    // redirect to the trips page
+    // Set success message
+    if (req.session) {
+      req.session.message = 'Trip created successfully!';
+    }
+    
+    // Redirect to the trips page
     res.redirect('/trips');
   } catch (err) {
     console.error('[POST /trips] Error creating trip:', err);
-    next(err);
+    
+    // Handle the error gracefully
+    if (req.session) {
+      req.session.message = 'Error creating trip. Please try again.';
+    }
+    
+    // Redirect back to trips page instead of showing error page
+    res.redirect('/trips');
   }
 });
 

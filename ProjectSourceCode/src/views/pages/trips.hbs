@@ -168,7 +168,7 @@
   <div class="modal fade" id="createTripModal" tabindex="-1" aria-labelledby="createTripModalLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
-        <form action="/trips" method="POST" class="needs-validation" novalidate>
+        <form id="createTripForm" action="/trips" method="POST" class="needs-validation" novalidate>
           <div class="modal-header">
             <h5 class="modal-title" id="createTripModalLabel">Create a New Trip</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -246,6 +246,9 @@
 <!-- Bootstrap JavaScript and dependencies -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
+<!-- Google Maps API -->
+<script src="https://maps.googleapis.com/maps/api/js?key={{mapApiKey}}&libraries=places" async defer></script>
+
 <script>
   // Form validation
   (function() {
@@ -266,9 +269,89 @@
     }, false);
   })();
 
+  // Geocoding functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize geocoder when Google Maps API is loaded
+    let geocoder;
+    
+    // Check if Google Maps API is loaded
+    function initGeocoder() {
+      if (typeof google !== 'undefined' && google.maps) {
+        console.log('Google Maps API loaded, initializing geocoder');
+        geocoder = new google.maps.Geocoder();
+        setupFormListener();
+      } else {
+        console.log('Google Maps API not yet loaded, waiting...');
+        setTimeout(initGeocoder, 500); // Check again in 500ms
+      }
+    }
+    
+    // Set up form listener for geocoding
+    function setupFormListener() {
+      const tripForm = document.getElementById('createTripForm');
+      
+      if (tripForm) {
+        console.log('Trip form found, adding submit event listener');
+        
+        tripForm.addEventListener('submit', function(event) {
+          if (geocoder) {
+            const city = document.getElementById('city').value;
+            const country = document.getElementById('country').value;
+            
+            if (city && country) {
+              console.log(`Geocoding address: ${city}, ${country}`);
+              event.preventDefault(); // Prevent normal form submission
+              
+              // Geocode the address
+              geocoder.geocode({ address: `${city}, ${country}` }, function(results, status) {
+                if (status === "OK" && results[0]) {
+                  // Get the location
+                  const location = results[0].geometry.location;
+                  
+                  // Create hidden inputs for coordinates
+                  const latInput = document.createElement('input');
+                  latInput.type = 'hidden';
+                  latInput.name = 'latitude';
+                  latInput.value = location.lat();
+                  tripForm.appendChild(latInput);
+                  
+                  const lngInput = document.createElement('input');
+                  lngInput.type = 'hidden';
+                  lngInput.name = 'longitude';
+                  lngInput.value = location.lng();
+                  tripForm.appendChild(lngInput);
+                  
+                  console.log(`Successfully geocoded to ${location.lat()}, ${location.lng()}`);
+                  
+                  // Submit the form
+                  tripForm.submit();
+                } else {
+                  console.error(`Geocoding failed with status: ${status}`);
+                  // Submit the form anyway, will use default coordinates
+                  tripForm.submit();
+                }
+              });
+            } else {
+              console.warn('City or country missing, submitting without geocoding');
+              // Form will submit normally
+            }
+          } else {
+            console.warn('Geocoder not available, submitting form without coordinates');
+            // Form will submit normally
+          }
+        });
+        
+        console.log('Submit event listener added to trip form');
+      } else {
+        console.error('Trip form not found!');
+      }
+    }
+    
+    // Start the initialization process
+    initGeocoder();
+  });
  
- 
- function deleteTrip(tripId) {
+  function deleteTrip(tripId) {
     // Store the tripId in a hidden variable or data attribute in the modal
     $('#deleteConfirmationModal').modal('show');  // Show the modal
 
@@ -299,7 +382,6 @@
       });
     };
   }
-
-
-  
 </script>
+</body>
+</html>
