@@ -218,7 +218,8 @@ function addTrip(event) {
       destinationId: parseInt(destinationId),
       destination: `${destination.city}, ${destination.country}`,
       startDate: startDate,
-      endDate: endDate
+      endDate: endDate,
+      tripName: savedTrip.tripName || tripName || `Trip to ${destination.city}`
     };
     
     // Add to our array
@@ -324,7 +325,7 @@ function getInfoWindowContent(destination) {
     destinationTrips.forEach(trip => {
       content += `
         <li style="color: black;">
-          <strong>${trip.startDate} to ${trip.endDate}</strong>
+          <strong>${trip.tripName || 'Unnamed Trip'}</strong>: ${trip.startDate} to ${trip.endDate}
         </li>`;
     });
     content += '</ul>';
@@ -400,9 +401,10 @@ function addTripToList(trip) {
   item.setAttribute("data-id", trip.id);
   item.innerHTML = `
     <div class="d-flex w-100 justify-content-between">
-      <h5 class="mb-1">${trip.destination}</h5>
+      <h5 class="mb-1">${trip.tripName || trip.destination}</h5>
       <button class="btn btn-sm btn-danger remove-btn">✕</button>
     </div>
+    <p class="mb-1">${trip.destination}</p>
     <p class="mb-1">${trip.startDate} to ${trip.endDate}</p>
   `;
   
@@ -633,7 +635,8 @@ function loadData() {
             destinationId: trip.destinationId,
             destination: trip.destination || `${trip.city}, ${trip.country}`,
             startDate: trip.startDate || trip.date_start,
-            endDate: trip.endDate || trip.date_end
+            endDate: trip.endDate || trip.date_end,
+            tripName: trip.tripName || trip.trip_name || `Trip to ${trip.city || 'Unknown'}`
           };
           
           trips.push(formattedTrip);
