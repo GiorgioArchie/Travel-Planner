@@ -56,6 +56,9 @@ function initializeDatepickers() {
 }
 
 // Add a new destination from the form
+// Find the addDestination function in map.js and update it
+
+// Add a new destination from the form
 function addDestination(event) {
   event.preventDefault();
   
@@ -76,10 +79,31 @@ function addDestination(event) {
       const location = results[0].geometry.location;
       console.log(`Location found: ${location.lat()}, ${location.lng()}`);
       
-      // Create a new destination object
+      // Get the corrected address components from the geocoding result
+      const addressComponents = results[0].address_components;
+      let correctedCity = cityName; // Default to original if not found
+      let correctedCountry = countryName; // Default to original if not found
+      
+      // Extract the correctly spelled city and country from the geocoding result
+      for (const component of addressComponents) {
+        if (component.types.includes('locality')) {
+          correctedCity = component.long_name;
+        } else if (component.types.includes('administrative_area_level_1')) {
+          // In some cases, the state/province might be more appropriate than locality
+          if (!correctedCity || correctedCity === cityName) {
+            correctedCity = component.long_name;
+          }
+        } else if (component.types.includes('country')) {
+          correctedCountry = component.long_name;
+        }
+      }
+      
+      console.log(`Corrected address: ${correctedCity}, ${correctedCountry}`);
+      
+      // Create a new destination object with the corrected names
       const destinationData = {
-        city: cityName,
-        country: countryName,
+        city: correctedCity,
+        country: correctedCountry,
         latitude: location.lat(),
         longitude: location.lng()
       };
@@ -104,8 +128,8 @@ function addDestination(event) {
         // Format destination for client-side use
         const destination = {
           id: savedDestination.id,
-          city: cityName,
-          country: countryName,
+          city: correctedCity,
+          country: correctedCountry,
           lat: location.lat(),
           lng: location.lng()
         };
