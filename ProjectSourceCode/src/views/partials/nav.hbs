@@ -1,40 +1,47 @@
+{{#if LoggedIn}}
 <header>
- <nav class="navbar navbar-expand-sm border-bottom">
-   <div class="container">
-     <button
-       class="navbar-toggler ms-auto"
-       type="button"
-       data-bs-toggle="collapse"
-       data-bs-target="#navbar-collapse"
-       aria-controls="navbar"
-       aria-expanded="false"
-       aria-label="Toggle navigation">
-       <span class="navbar-toggler-icon"></span>
-     </button>
-     <div class="collapse navbar-collapse" id="navbar-collapse">
-       <ul class="navbar-nav me-auto">
-        <li class="nav-item">
-           <!--For the calendar page-->
-           <a href="{{#if LoggedIn}}/map{{else}}/login{{/if}}">Home</a>
-         </li>
-         <li class="nav-item">
-           <!--For the calendar page-->
-           <a href="{{#if LoggedIn}}/calendar{{else}}/login{{/if}}">Calendar</a>
-         </li>
-         <li class="nav-item">
-           <!--For the list of all trips page-->
-           <a href="{{#if LoggedIn}}/trips{{else}}/login{{/if}}">All Trips</a>
-         </li>
-         <li class="nav-item">
-           <!--For the journal about trips page (update page) page-->
-           <a href="{{#if LoggedIn}}/journal{{else}}/login{{/if}}">Journal</a>
-         </li>
-      
-       </ul>
-       <div class="nav-item me-1">
-         <a href="/logout">Logout</a>
-       </div>
-     </div>
-   </div>
- </nav>
+  <nav class="navbar navbar-expand-sm" style="background-color: #e6f4ea;">
+    <div class="container">
+      <!-- Logo/title -->
+      <span class="navbar-brand fw-bold">
+        🌍 Travel Planner
+      </span>
+
+      <!-- Toggler -->
+      <button
+        class="navbar-toggler"
+        type="button"
+        data-bs-toggle="collapse"
+        data-bs-target="#navbarNav"
+        aria-controls="navbarNav"
+        aria-expanded="false"
+        aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <!-- Nav links -->
+      <div class="collapse navbar-collapse" id="navbarNav">
+        <ul class="navbar-nav me-auto mb-2 mb-sm-0">
+          <li class="nav-item">
+            <a class="btn btn-sm mx-1" style="background-color: #cce5ff; color: #004085;" href="/map">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-sm mx-1" style="background-color: #cce5ff; color: #004085;" href="/calendar">Calendar</a>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-sm mx-1" style="background-color: #cce5ff; color: #004085;" href="/trips">All Trips</a>
+          </li>
+          <li class="nav-item">
+            <a class="btn btn-sm mx-1" style="background-color: #cce5ff; color: #004085;" href="/journal">Journal</a>
+          </li>
+        </ul>
+
+        <div class="d-flex align-items-center">
+          <span class="me-3 text-muted small">Hello, {{username}}</span>
+          <a href="/logout" class="btn btn-outline-danger btn-sm">Logout</a>
+        </div>
+      </div>
+    </div>
+  </nav>
 </header>
+{{/if}}

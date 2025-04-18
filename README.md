@@ -19,6 +19,17 @@ In addition to planning, the app also serves as a travel journal, where users ca
 
 ## Prerequisites to run the application - Any software that needs to be installed to run the application
 - npm install express-fileupload
+- docker
+- code editor/compiler
 ## Instructions on how to run the application locally.
+- First copy the Travel-Planner Repository to your local machine
+- have docker up and running (only for windows OS)
+- Open an integrated Terminal within ~/Travel-Planner repository
+- type "docker compose up" to run a local host
+- go to internet browser
+- type "localhost:3000" in url
+- Once finished with application, type "docker compose down -v" in ~/Travel-Planner terminal
 ## How to run the tests
+- npm run test
 ## Link to the deployed application
+- /localhost:3000

@@ -117,11 +117,11 @@
                   </div>
                   <div class="form-group">
                     <label for="tripStartDate">Start Date</label>
-                    <input type="text" class="form-control datepicker" id="tripStartDate" placeholder="Select date">
+                    <input type="text" class="form-control datepicker" id="tripStartDate" placeholder="Select date" required>
                   </div>
                   <div class="form-group">
                     <label for="tripEndDate">End Date</label>
-                    <input type="text" class="form-control datepicker" id="tripEndDate" placeholder="Select date">
+                    <input type="text" class="form-control datepicker" id="tripEndDate" placeholder="Select date" required>
                   </div>
                   <button type="submit" class="btn btn-primary btn-block">Create Trip</button>
                 </form>
@@ -153,18 +153,5 @@
   
   <!-- Custom map JavaScript -->
   <script src="/js/map.js"></script>
-  
-  <!-- Custom script to handle create trip redirect -->
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      const tripForm = document.getElementById('addTripForm');
-      if (tripForm) {
-        tripForm.addEventListener('submit', function(e) {
-          e.preventDefault();
-          window.location.href = '/calendar';
-        });
-      }
-    });
-  </script>
 </body>
 </html>
