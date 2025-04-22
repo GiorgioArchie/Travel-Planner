@@ -23,7 +23,7 @@ services:
       - '3000:3000'
     volumes:
       - ./ProjectSourceCode:/ProjectSourceCode
-    command: 'npm run testandrun'
+    command: 'npm start'
 
 volumes:
   postgres-data:
