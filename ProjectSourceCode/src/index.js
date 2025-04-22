@@ -233,11 +233,14 @@ app.post('/events', isAuthenticated, async (req, res, next) => {
   
   const username = req.session.user.username;
   const { trip_id, start_time, end_time, city, country, activity, description } = req.body;
-  
+  console.log('trip_id: ', trip_id);
   // Adjust the validation to check for trip_id instead of event_id
-  if (!trip_id || !start_time || !end_time || !city || !country || !activity) {
-    return res.status(400).send('All required fields must be provided.');
+  if (!trip_id) {
+    console.error('Server error: Missing trip_id');
+    return res.status(500).send('Something went wrong.');
   }
+  
+  
 
   try {
     // Insert into events. Assuming your 'events' table auto-generates a primary key (e.g., event_id)
