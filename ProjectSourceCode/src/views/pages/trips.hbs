@@ -271,85 +271,132 @@
 
   // Geocoding functionality
   document.addEventListener('DOMContentLoaded', function() {
-    // Initialize geocoder when Google Maps API is loaded
-    let geocoder;
-    
-    // Check if Google Maps API is loaded
-    function initGeocoder() {
-      if (typeof google !== 'undefined' && google.maps) {
-        console.log('Google Maps API loaded, initializing geocoder');
-        geocoder = new google.maps.Geocoder();
-        setupFormListener();
-      } else {
-        console.log('Google Maps API not yet loaded, waiting...');
-        setTimeout(initGeocoder, 500); // Check again in 500ms
-      }
-    }
-    
-    // Set up form listener for geocoding
-    function setupFormListener() {
-      const tripForm = document.getElementById('createTripForm');
+  const tripForm = document.getElementById('createTripForm');
+  
+  if (tripForm) {
+    tripForm.addEventListener('submit', function(event) {
+      const cityField = document.getElementById('city');
+      const countryField = document.getElementById('country');
       
-      if (tripForm) {
-        console.log('Trip form found, adding submit event listener');
+      if (cityField && cityField.value && countryField && countryField.value) {
+        event.preventDefault(); // Prevent default form submission
         
-        tripForm.addEventListener('submit', function(event) {
-          if (geocoder) {
-            const city = document.getElementById('city').value;
-            const country = document.getElementById('country').value;
-            
-            if (city && country) {
-              console.log(`Geocoding address: ${city}, ${country}`);
-              event.preventDefault(); // Prevent normal form submission
+        // Use Google Maps Geocoder API to validate and correct location
+        if (typeof google !== 'undefined' && google.maps) {
+          const geocoder = new google.maps.Geocoder();
+          
+          geocoder.geocode({ address: `${cityField.value}, ${countryField.value}` }, function(results, status) {
+            if (status === "OK" && results[0]) {
+              // Get the corrected address components
+              const addressComponents = results[0].geometry.location;
+              const location = results[0].geometry.location;
+              let correctedCity = cityField.value; // Default to original if not found
+              let correctedCountry = countryField.value; // Default to original if not found
               
-              // Geocode the address
-              geocoder.geocode({ address: `${city}, ${country}` }, function(results, status) {
-                if (status === "OK" && results[0]) {
-                  // Get the location
-                  const location = results[0].geometry.location;
-                  
-                  // Create hidden inputs for coordinates
-                  const latInput = document.createElement('input');
+              // Extract correctly spelled city and country from geocoding result
+              for (const component of results[0].address_components) {
+                if (component.types.includes('locality')) {
+                  correctedCity = component.long_name;
+                } else if (component.types.includes('administrative_area_level_1')) {
+                  // In some cases, the state/province might be more appropriate than locality
+                  if (!correctedCity || correctedCity === cityField.value) {
+                    correctedCity = component.long_name;
+                  }
+                } else if (component.types.includes('country')) {
+                  correctedCountry = component.long_name;
+                }
+              }
+              
+              // Check if there were corrections
+              const cityChanged = correctedCity !== cityField.value;
+              const countryChanged = correctedCountry !== countryField.value;
+              
+              if (cityChanged || countryChanged) {
+                // Update form fields with corrected values
+                cityField.value = correctedCity;
+                countryField.value = correctedCountry;
+                
+                // Create hidden fields for coordinates
+                let latInput = document.getElementById('latitude');
+                let lngInput = document.getElementById('longitude');
+                
+                if (!latInput) {
+                  latInput = document.createElement('input');
                   latInput.type = 'hidden';
                   latInput.name = 'latitude';
-                  latInput.value = location.lat();
+                  latInput.id = 'latitude';
                   tripForm.appendChild(latInput);
-                  
-                  const lngInput = document.createElement('input');
+                }
+                
+                if (!lngInput) {
+                  lngInput = document.createElement('input');
                   lngInput.type = 'hidden';
                   lngInput.name = 'longitude';
-                  lngInput.value = location.lng();
+                  lngInput.id = 'longitude';
                   tripForm.appendChild(lngInput);
-                  
-                  console.log(`Successfully geocoded to ${location.lat()}, ${location.lng()}`);
-                  
-                  // Submit the form
-                  tripForm.submit();
-                } else {
-                  console.error(`Geocoding failed with status: ${status}`);
-                  // Submit the form anyway, will use default coordinates
-                  tripForm.submit();
                 }
-              });
+                
+                latInput.value = location.lat();
+                lngInput.value = location.lng();
+                
+                // Show notification about corrections
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-info alert-dismissible fade show';
+                alertDiv.role = 'alert';
+                alertDiv.innerHTML = `
+                  <strong>Location Updated:</strong> We've corrected your location to "${correctedCity}, ${correctedCountry}".
+                  <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                `;
+                
+                // Insert alert before the form
+                tripForm.parentNode.insertBefore(alertDiv, tripForm);
+                
+                // Auto-submit the form after a brief delay
+                setTimeout(() => {
+                  tripForm.submit();
+                }, 1500);
+              } else {
+                // No corrections needed, just add coordinates and submit
+                let latInput = document.getElementById('latitude');
+                let lngInput = document.getElementById('longitude');
+                
+                if (!latInput) {
+                  latInput = document.createElement('input');
+                  latInput.type = 'hidden';
+                  latInput.name = 'latitude';
+                  latInput.id = 'latitude';
+                  tripForm.appendChild(latInput);
+                }
+                
+                if (!lngInput) {
+                  lngInput = document.createElement('input');
+                  lngInput.type = 'hidden';
+                  lngInput.name = 'longitude';
+                  lngInput.id = 'longitude';
+                  tripForm.appendChild(lngInput);
+                }
+                
+                latInput.value = location.lat();
+                lngInput.value = location.lng();
+                
+                // Submit form
+                tripForm.submit();
+              }
             } else {
-              console.warn('City or country missing, submitting without geocoding');
-              // Form will submit normally
+              // Geocoding failed, submit with original values
+              console.warn(`Geocoding failed with status: ${status}`);
+              tripForm.submit();
             }
-          } else {
-            console.warn('Geocoder not available, submitting form without coordinates');
-            // Form will submit normally
-          }
-        });
-        
-        console.log('Submit event listener added to trip form');
-      } else {
-        console.error('Trip form not found!');
+          });
+        } else {
+          // Google Maps API not available, submit form anyway
+          console.warn('Google Maps API not available');
+          tripForm.submit();
+        }
       }
-    }
-    
-    // Start the initialization process
-    initGeocoder();
-  });
+    });
+  }
+});
  
   function deleteTrip(tripId) {
     // Store the tripId in a hidden variable or data attribute in the modal
