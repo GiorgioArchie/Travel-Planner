@@ -212,6 +212,7 @@ res.redirect('/login?message=Error during login. Please try again.');
 }
 });
 
+
 // Route for logout
 app.get('/logout', (req, res) => {
 // Destroy the session
