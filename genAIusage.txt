@@ -1,3 +1,563 @@
+# Troubleshooting Message Partial Issue
+
+**Created:** 3/20/2025 11:02  
+**Updated:** 4/3/2025 10:31  
+**Exported:** 4/22/2025 8:56  
+
+## Prompt:
+I am having problems with the message partial can you find the error and fix it
+
+## Prompt:
+```
+Error: The partial title could not be found
+```
+
+## Prompt:
+what is the contents of title.hbs
+
+## Prompt:
+```
+Error: Parse error on line 35:
+...v> </nav></header>
+---------------------^
+Expecting 'OPEN_ENDBLOCK', got 'EOF'
+    at Parser.parseError (/repository/node_modules/handlebars/dist/cjs/handlebars/compiler/parser.js:267:19)
+    at Parser.parse (/repository/node_modules/handlebars/dist/cjs/handlebars/compiler/parser.js:336:30)
+    at parseWithoutProcessing (/repository/node_modules/handlebars/dist/cjs/handlebars/compiler/base.js:46:33)
+    at HandlebarsEnvironment.parse (/repository/node_modules/handlebars/dist/cjs/handlebars/compiler/base.js:52:13)
+    at compileInput (/repository/node_modules/handlebars/dist/cjs/handlebars/compiler/compiler.js:508:19)
+    at ret (/repository/node_modules/handlebars/dist/cjs/handlebars/compiler/compiler.js:517:18)
+    at Object.invokePartial (/repository/node_modules/handlebars/dist/cjs/handlebars/runtime.js:334:12)
+    at Object.invokePartialWrapper [as invokePartial] (/repository/node_modules/handlebars/dist/cjs/handlebars/runtime.js:84:39)
+    at Object.eval [as main] (eval at createFunctionContext (/repository/node_modules/handlebars/dist/cjs/handlebars/compiler/javascript-compiler.js:262:23), <anonymous>:13:28)
+    at main (/repository/node_modules/handlebars/dist/cjs/handlebars/runtime.js:208:32)
+```
+
+## Prompt:
+Error registering user.
+
+## Prompt:
+can you give me the updated index.js file
+
+## Prompt:
+Error registering user. Please try again.
+
+## Prompt:
+can you give me the updated create.sql and index.js also what the file is for the register form
+
+## Prompt:
+Database error. Please try again.
+
+## Prompt:
+I am trying to use the google maps API on the /map page could you implement this API properly I already have the API key in the .env file
+
+## Prompt:
+where should the map.hbs go
+
+## Prompt:
+The API has been added properly and I can see the map on the /map page but when it loads it gives me an error message of "**This page can't load Google Maps correctly.**
+**Do you own this website?"**
+
+## Prompt:
+is this correct?:
+Website restrictions
+Restrict key usage requests to the specified websites.
+If left blank, your API key will accept requests from any website.
+Add website
+Website
+
+## Prompt:
+this is the website domain: http://localhost:3000/map
+
+## Prompt:
+Name
+Use a unique name to identify your API key
+Key restrictions
+Add restrictions to reduce security risk and prevent unauthorized use. Learn more
+Application restrictions
+None
+Websites
+IP addresses
+Android apps
+iOS apps
+Website restrictions
+Restrict key usage requests to the specified websites.
+If left blank, your API key will accept requests from any website.
+** Add**
+Filter
+StatusWebsiteEdithttp://localhost:3000
+API restrictions
+Don't restrict key
+This key can call any API
+Restrict key
+Note: It may take up to 5 minutes for settings to take effect
+
+## Prompt:
+I have changed some things with the sql and docker files when composing up I get this error: Error response from daemon: driver failed programming external connectivity on endpoint travel-planner-web-1 (22228ad622b6963c566398aac8687a5695334c810915bced24fa99eb2079625c): Bind for 0.0.0.0:3000 failed: port is already allocated
+Can you find the error and fix it?
+
+## Prompt:
+services.db must be a mapping
+
+## Prompt:
+docker reads: The "GOOGLE_MAPS_API_KEY" variable is not set. Defaulting to a blank string. 
+here is my .env file: # database credentials
+POSTGRES_USER="postgres"
+POSTGRES_PASSWORD="postgres"
+POSTGRES_DB="travel_planner"
+
+
+# Node vars
+SESSION_SECRET="super duper secret!"
+API_KEY="AIzaSyAX9-EZqTxWl7sQfBVdDHmaI6bN5l3otU4"
+
+## Prompt:
+docker reads : [nodemon] app crashed - waiting for file changes before starting...
+2025-04-01 08:11:22 WARNING: Google Maps API key is missing from environment variables
+2025-04-01 08:14:24 WARNING: Google Maps API key is missing from environment variables
+2025-04-01 08:15:58 WARNING: Google Maps API key is missing from environment variables
+2025-04-01 08:19:52 node:internal/modules/cjs/loader:1247
+2025-04-01 08:19:52   throw err;
+2025-04-01 08:19:52   ^
+2025-04-01 08:19:52 
+2025-04-01 08:19:52 Error: Cannot find module 'googleapis'
+2025-04-01 08:19:52 Require stack:
+2025-04-01 08:19:52 - /repository/src/index.js
+2025-04-01 08:19:52     at Function._resolveFilename (node:internal/modules/cjs/loader:1244:15)
+2025-04-01 08:19:52     at Function._load (node:internal/modules/cjs/loader:1070:27)
+2025-04-01 08:19:52     at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+2025-04-01 08:19:52     at wrapModuleLoad (node:internal/modules/cjs/loader:217:24)
+2025-04-01 08:19:52     at Module.require (node:internal/modules/cjs/loader:1335:12)
+2025-04-01 08:19:52     at require (node:internal/modules/helpers:136:16)
+2025-04-01 08:19:52     at Object.<anonymous> (/repository/src/index.js:11:20)
+2025-04-01 08:19:52     at Module._compile (node:internal/modules/cjs/loader:1562:14)
+2025-04-01 08:19:52     at Object..js (node:internal/modules/cjs/loader:1699:10)
+2025-04-01 08:19:52     at Module.load (node:internal/modules/cjs/loader:1313:32) {
+2025-04-01 08:19:52   code: 'MODULE_NOT_FOUND',
+2025-04-01 08:19:52   requireStack: [ '/repository/src/index.js' ]
+2025-04-01 08:19:52 }
+2025-04-01 08:19:52 
+2025-04-01 08:19:52 Node.js v22.13.0
+and the site reads:
+**This page isn’t working**
+**localhost** didn’t send any data.
+ERR_EMPTY_RESPONSE
+
+## Prompt:
+can you give me all the updated file
+
+## Prompt:
+this fixed my main issue of the docker compose I think i just need to wait 5 minutes for the api
+
+## Prompt:
+here is the network tab
+
+## Prompt:
+this is my api key config:
+Name
+Use a unique name to identify your API key
+Key restrictions
+Add restrictions to reduce security risk and prevent unauthorized use. Learn more
+Application restrictions
+None
+Websites
+IP addresses
+Android apps
+iOS apps
+Website restrictions
+Restrict key usage requests to the specified websites.
+If left blank, your API key will accept requests from any website.
+** Add**
+Filter
+StatusWebsiteEdithttp://127.0.0.1:3000http://localhost:3000http://localhost:3000/*http://localhost:3001http://localhost:3001/*
+API restrictions
+Don't restrict key
+This key can call any API
+Restrict key
+Note: It may take up to 5 minutes for settings to take effect
+
+## Prompt:
+ok i enabled the map javascript api so i just need to wait 5 mins
+
+## Prompt:
+2025-04-01 09:01:12 WARNING: Google Maps API key is missing from environment variables
+2025-04-01 09:01:12 Map page requested, API key exists: false
+
+## Prompt:
+console.log('- API_KEY exists:', !!process.env.API_KEY);
+web:
+    image: node:lts
+    working_dir: /repository
+    environment:
+      - NODE_ENV=development
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - API_KEY=${API_KEY}
+      - SESSION_SECRET=${SESSION_SECRET}
+
+## Prompt:
+.env file:POSTGRES_USER=postgres
+POSTGRES_PASSWORD=postgres
+POSTGRES_DB=travel_planner
+SESSION_SECRET=super duper secret!
+API_KEY=AIzaSyAX9-EZqTxWl7sQfBVdDHmaI6bN5l3otU4
+
+## Prompt:
+can you give me the updated yaml file
+
+## Prompt:
+this did not fix the error
+
+## Prompt:
+I got this message when trying the first command: 
+Error response from daemon: container d78b9736f51ac40a97a60df52a6edc7575bf9713067c03feedd3f4dbfd623c22 is not running
+
+## Prompt:
+enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/repository/package.json'
+web-1  | npm error enoent This is related to npm not being able to find a file.
+web-1  | npm error enoent
+web-1  | npm error A complete log of this run can be found in: /root/.npm/_logs/2025-04-01T15_06_00_177Z-debug-0.log
+web-1  | npm error code ENOENT
+web-1  | npm error syscall open
+web-1  | npm error path /repository/package.json
+web-1  | npm error errno -2
+web-1  | npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/repository/package.json'
+web-1  | npm error enoent This is related to npm not being able to find a file.
+web-1  | npm error enoent
+
+## Prompt:
+2025-04-01 09:13:02 web-1  | Map page requested, API key exists: false
+2025-04-01 09:13:02 web-1  | WARNING: Google Maps API key is missing from environment variables
+
+## Prompt:
+give me the updated files
+
+## Prompt:
+docker reads: Map page requested, API key exists: true
+But i still get the message of: **This page can't load Google Maps correctly.**
+**Do you own this website?**
+on the website
+
+## Prompt:
+I am using localhost:3000 can I change the ports back on the yaml file
+
+## Prompt:
+never mind that broke it change it back
+
+## Prompt:
+the website works again but same issue with the google map api here is what the terminal reads:
+web-1  | npm error code ENOENT
+web-1  | npm error syscall open
+web-1  | npm error path /repository/package.json
+web-1  | npm error errno -2
+web-1  | npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/repository/package.json'
+web-1  | npm error enoent This is related to npm not being able to find a file.
+web-1  | npm error enoent
+web-1  | npm error A complete log of this run can be found in: /root/.npm/_logs/2025-04-01T15_22_12_228Z-debug-0.log
+web-1 exited with code 254
+
+## Prompt:
+everything with docker works now but the issue persists so i think it is something with the API key
+
+## Prompt:
+I have changed the API settings to this: Application restrictions
+None
+
+API restrictions
+Don't restrict key
+This key can call any API
+Restrict key
+
+## Prompt:
+i have updated the repository and the API works now when running docker I get this:
+}
+2025-04-01 15:47:51 web-1  | npm error path /Travel-Planner
+2025-04-01 15:47:51 web-1  | npm error command failed
+2025-04-01 15:47:51 web-1  | npm error signal SIGTERM
+2025-04-01 15:47:51 web-1  | npm error command sh -c nodemon index.js
+2025-04-01 15:47:51 web-1  | npm notice
+2025-04-01 15:47:51 web-1  | npm notice New major version of npm available! 10.9.2 -> 11.2.0
+2025-04-01 15:47:51 web-1  | npm notice Changelog: https://github.com/npm/cli/releases/tag/v11.2.0
+2025-04-01 15:47:51 web-1  | npm notice To update run: npm install -g npm@11.2.0
+2025-04-01 15:47:51 web-1  | npm notice
+2025-04-01 15:47:51 web-1  | npm error A complete log of this run can be found in: /root/.npm/_logs/2025-04-01T21_36_35_353Z-debug-0.log
+2025-04-01 15:55:15 web-1  | npm error code ENOENT
+2025-04-01 15:55:15 web-1  | npm error syscall open
+2025-04-01 15:55:15 web-1  | npm error path /Travel-Planner/package.json
+2025-04-01 15:55:15 web-1  | npm error errno -2
+2025-04-01 15:55:15 web-1  | npm error enoent Could not read package.json: Error: ENOENT: no such file or directory, open '/Travel-Planner/package.json'
+2025-04-01 15:55:15 web-1  | npm error enoent This is related to npm not being able to find a file.
+2025-04-01 15:55:15 web-1  | npm error enoent
+2025-04-01 15:55:15 web-1  | npm error A complete log of this run can be found in: /root/.npm/_logs/2025-04-01T21_55_15_877Z-debug-0.log
+2036-01-01 00:00:00 
+2001-01-01 00:00:00 xited with code 254
+
+## Prompt:
+now docker correctly starts and I am able to visit the site when registering a user I get this error message: Database error. Please try again.
+
+## Prompt:
+none of this worked just give me the updated create.sql
+
+## Prompt:
+here is what docker reads when the user tries to register:
+web-1  | Registration attempt with data: { username: 'test', passwordProvided: true }
+web-1  | Checking if username exists...
+db-1   | 2025-04-01 22:01:19.174 UTC [71] ERROR:  relation "users" does not exist at character 22
+db-1   | 2025-04-01 22:01:19.174 UTC [71] STATEMENT:  SELECT username FROM users WHERE username = 'test'
+web-1  | Error checking for existing user: error: relation "users" does not exist
+web-1  |     at Parser.parseErrorMessage (/repository/ProjectSourceCode/node_modules/pg-protocol/dist/parser.js:283:98)
+web-1  |     at Parser.handlePacket (/repository/ProjectSourceCode/node_modules/pg-protocol/dist/parser.js:122:29)
+web-1  |     at Parser.parse (/repository/ProjectSourceCode/node_modules/pg-protocol/dist/parser.js:35:38)
+web-1  |     at Socket.<anonymous> (/repository/ProjectSourceCode/node_modules/pg-protocol/dist/index.js:11:42)
+web-1  |     at Socket.emit (node:events:524:28)
+web-1  |     at addChunk (node:internal/streams/readable:561:12)
+web-1  |     at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)
+web-1  |     at Readable.push (node:internal/streams/readable:392:5)
+web-1  |     at TCP.onStreamRead (node:internal/stream_base_commons:189:23) {
+web-1  |   length: 104,
+web-1  |   severity: 'ERROR',
+web-1  |   code: '42P01',
+web-1  |   detail: undefined,
+web-1  |   hint: undefined,
+web-1  |   position: '22',
+web-1  |   internalPosition: undefined,
+web-1  |   internalQuery: undefined,
+web-1  |   where: undefined,
+web-1  |   schema: undefined,
+web-1  |   table: undefined,
+web-1  |   column: undefined,
+web-1  |   dataType: undefined,
+web-1  |   constraint: undefined,
+web-1  |   file: 'parse_relation.c',
+web-1  |   line: '1381',
+web-1  |   routine: 'parserOpenTable',
+web-1  |   query: "SELECT username FROM users WHERE username = 'test'",
+web-1  |   params: undefined
+web-1  | }
+
+## Prompt:
+when  tring fix 1:
+2001-01-01 00:00:00 xited with code 254
+db-1   | 2025-04-01T22:02:53.842315853Z 2025-04-01 22:02:53.842 UTC [49] LOG:  database system is shut down
+2025-04-01 16:02:53 db-1   |  done
+2025-04-01 16:02:53 db-1   | server stopped
+2025-04-01 16:02:53 db-1   | 
+2025-04-01 16:02:53 db-1   | PostgreSQL init process complete; ready for start up.
+2025-04-01 16:02:53 db-1   | 
+2025-04-01 16:02:53 db-1   | 2025-04-01 22:02:53.936 UTC [1] LOG:  starting PostgreSQL 14.15 (Debian 14.15-1.pgdg120+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 12.2.0-14) 12.2.0, 64-bit
+2025-04-01 16:02:53 db-1   | 2025-04-01 22:02:53.936 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+2025-04-01 16:02:53 db-1   | 2025-04-01 22:02:53.936 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+2025-04-01 16:02:53 db-1   | 2025-04-01 22:02:53.939 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+2025-04-01 16:02:53 db-1   | 2025-04-01 22:02:53.942 UTC [64] LOG:  database system was shut down at 2025-04-01 22:02:53 UTC
+2025-04-01 16:02:53 db-1   | 2025-04-01 22:02:53.947 UTC [1] LOG:  database system is ready to accept connections
+
+## Prompt:
+I have reverted back to the most up to date verision of the repo
+
+## Prompt:
+docker compose ps:
+NAME                   IMAGE         COMMAND                  SERVICE   CREATED          STATUS          PORTS
+travel-planner-db-1    postgres:14   "docker-entrypoint.s…"   db        55 seconds ago   Up 54 seconds   5432/tcp
+travel-planner-web-1   node:lts      "docker-entrypoint.s…"   web       55 seconds ago   Up 54 seconds   0.0.0.0:3000->3000/tcp
+
+## Prompt:
+i am using the 3000 port but still am seeing the same database issue
+
+## Prompt:
+Did not find any relation named "users".
+can you give me the updated sql
+
+## Prompt:
+this is the create.sql file correct?
+
+## Prompt:
+this fixed the issue now i can test the map API and it also seems like the geolocation works too
+
+## Prompt:
+Here is what the map page looks like I want to change the side bar so the user can add trips, events as well as Journal entries can you make it so when the user adds these to the location it appears when the user clicks on the pin
+
+## Prompt:
+it seems like you were unable to finish the map.js can you please just give me this file
+
+## Prompt:
+all the feilds have been added the only thing that is not funtional is when you click the pin it should show your trip
+
+## Prompt:
+Here is what it looks like as you can see when clicking the pin the text feild pops up but no contents are in it
+
+## Prompt:
+just give me the full updated map.js
+
+## Prompt:
+this did not fix the issue
+
+## Prompt:
+i reverted back this simplified version does not work at all
+
+## Prompt:
+oh wait i think it worked all along its just white text on white background can you change the text to black but keep the back ground white
+
+## Prompt:
+ok give me the full map.js file now
+
+## Prompt:
+when the user adds a trip or event or journal enrty it is not added to the database can you fix that
+
+## Prompt:
+just give me the full create.sql file
+
+## Prompt:
+ok now just give me the updated map.js
+
+## Prompt:
+continue
+
+## Prompt:
+ok now give me the updated index.js
+
+## Prompt:
+once the user logs in it should direct to the map page
+
+## Prompt:
+now when going to the trips section on the home page and saving a trip the page reads : Please select a valid destination
+
+## Prompt:
+can you give me the full map.js
+
+## Prompt:
+just give me the addTrip
+
+## Prompt:
+where is the catch
+
+## Prompt:
+here is my current function: 
+function addTrip(event) {
+  event.preventDefault();
+  
+  const destinationId = document.getElementById("tripDestination").value;
+  const startDate = document.getElementById("tripStartDate").value;
+  const endDate = document.getElementById("tripEndDate").value;
+  
+  if (!destinationId || !startDate || !endDate) {
+    alert("Please fill in all required fields");
+    return;
+  }
+  
+  // Find the destination
+  const destination = destinations.find(d => d.id == destinationId);
+  
+  if (!destination) {
+    alert("Please select a valid destination");
+    return;
+  }
+  
+  // Create trip data object
+  const tripData = {
+    destinationId: parseInt(destinationId),
+    startDate: startDate,
+    endDate: endDate,
+    city: destination.city,
+    country: destination.country
+  };
+  
+  // Save trip to database
+  fetch('/api/trips', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(tripData)
+  })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return response.json();
+  })
+  .then(savedTrip => {
+    // Create trip object for client-side use
+    const trip = {
+      id: savedTrip.id || savedTrip.trip_id,
+      destinationId: parseInt(destinationId),
+      destination: `${destination.city}, ${destination.country}`,
+      startDate: startDate,
+      endDate: endDate
+    };
+    
+    // Add to our array
+    trips.push(trip);
+    
+    // Add to the sidebar list
+    addTripToList(trip);
+    
+    // Update trip dropdown in event form
+    updateTripDropdown();
+    
+    // Update marker info windows
+    updateAllMarkerInfoWindows();
+    
+    // Save to localStorage as backup
+    saveData();
+    
+    // Clear the form
+    document.getElementById("tripDestination").selectedIndex = 0;
+    document.getElementById("tripStartDate").value = "";
+    document.getElementById("tripEndDate").value = "";
+  })
+  .catch(error => {
+    console.error('Error saving trip:', error);
+    
+    // Fallback: save locally even if server save fails
+    const trip = {
+      id: Date.now(),
+      destinationId: parseInt(destinationId),
+      destination: `${destination.city}, ${destination.country}`,
+      startDate: startDate,
+      endDate: endDate
+    };
+    
+    trips.push(trip);
+    addTripToList(trip);
+    updateTripDropdown();
+    updateAllMarkerInfoWindows();
+    saveData();
+    
+    document.getElementById("tripDestination").selectedIndex = 0;
+    document.getElementById("tripStartDate").value = "";
+    document.getElementById("tripEndDate").value = "";
+  });
+}
+
+## Prompt:
+no could you add a drop down of available destinations
+
+## Prompt:
+this did not effect the error
+
+## Prompt:
+give me the full addTrip
+
+## Prompt:
+the destination is currently a text box make it a drop down
+
+## Prompt:
+on the map page remove the events and journal tabs and on the trips tab remove the destination box and change the "save trip" text to be "create trip" and once the user clicks this it should redirect the user to the calandar page
+
+## Prompt:
+give me the full updated files
+
+## Prompt:
+The trip tab should have a title and the create trip does not redirect to the calander page
+
+
+
+---
+Powered by [Claude Exporter](https://www.claudexporter.com)
+
+
+
 # Customizing Map Page Layout and Functionality
 
 **Created:** 4/3/2025 10:47  
@@ -940,6 +1500,38 @@ on the all trips page if the user has a typo in their location i want it to fix 
 
 ## Prompt:
 i want to get my logs so i can site the usage of AI how do i pull our chat logs onto a text document
+
+
+
+---
+Powered by [Claude Exporter](https://www.claudexporter.com)
+
+# Improving Map Spell Check to Display Locations in English
+
+**Created:** 4/22/2025 9:07  
+**Updated:** 4/22/2025 9:27  
+**Exported:** 4/22/2025 9:37  
+
+## Prompt:
+when adding a destination on the map page the spell check is to accurate and it puts the location in as the language of the destination can you make sure that it still does spell check but puts the location in, in english
+
+## Prompt:
+no this did not fix the issue maybe their is another way to specify the language
+
+## Prompt:
+can you do the same for the trips page
+
+## Prompt:
+this fixed the spelling error but the pin is just added to the middle of the map so i think you need to pass the location first to the api then after it is added to the map correct the name and add it to the destination feild
+
+## Prompt:
+it works fine on the map page but it does not work when pulling from the trip page
+
+## Prompt:
+just give me the full updated trips.hbs file
+
+## Prompt:
+you are not giving me the hbs file you are giving me a document where the spacing and format is wrong and does not work in hbs
 
 
 
