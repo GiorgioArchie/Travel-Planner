@@ -145,5 +145,60 @@ describe('Testing Add User API', () => {
         done();
       });
   });
+
+  // ********************************************************************************
+  describe('Testing /logout functionality', () => {
+    const testUser = {
+      username: `logout_user_${Date.now()}`,
+      password: 'testpass123'
+    };
   
-// ********************************************************************************
+    let agent;
+  
+    before(done => {
+      // Register a test user
+      chai.request(server)
+        .post('/register')
+        .send({ ...testUser, test: true })
+        .end((err, res) => {
+          expect(res).to.have.status(200);
+          done();
+        });
+    });
+  
+    beforeEach(() => {
+      agent = chai.request.agent(server);
+    });
+  
+    afterEach(() => {
+      agent.close();
+    });
+  
+    it('positive: should logout and redirect to login with a message', done => {
+      agent
+        .post('/login')
+        .send(testUser)
+        .end((err, res) => {
+          expect(res).to.have.status(200);
+  
+          agent
+            .get('/logout')
+            .end((err, res) => {
+              res.should.have.status(200);
+              res.text.should.include('You have been logged out');
+              done();
+            });
+        });
+    });
+  
+    it('negative: calling /logout without session should still redirect to login', done => {
+      chai.request(server)
+        .get('/logout')
+        .end((err, res) => {
+          res.should.have.status(200);
+          res.text.should.include('You have been logged out');
+          done();
+        });
+    });
+  });
+  
