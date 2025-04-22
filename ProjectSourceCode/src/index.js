@@ -212,6 +212,7 @@ res.redirect('/login?message=Error during login. Please try again.');
 }
 });
 
+
 // Route for logout
 app.get('/logout', (req, res) => {
 // Destroy the session
@@ -1018,11 +1019,12 @@ app.post('/journal/edit', isAuthenticated, async (req, res) => {
       photos = [photos];
     }
 
-    // Update the journal comment
-    await db.none(
-      `UPDATE journals SET comments = $1 WHERE journal_id = $2`,
-      [comment, journalId]
-    );
+    if (comment && comment.trim() !== '') {
+      await db.none(
+        `UPDATE journals SET comments = $1 WHERE journal_id = $2`,
+        [comment.trim(), journalId]
+      );
+    }
 
     // Upload each new photo and associate with journal
     if (photos && photos.length > 0) {
@@ -1049,6 +1051,7 @@ app.post('/journal/edit', isAuthenticated, async (req, res) => {
     res.redirect(`/journal?tripId=${req.body.tripId}&message=Error editing journal`);
   }
 });
+
 
 
 
