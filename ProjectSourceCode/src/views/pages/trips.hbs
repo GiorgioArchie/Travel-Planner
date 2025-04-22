@@ -277,6 +277,22 @@
     tripForm.addEventListener('submit', function(event) {
       const cityField = document.getElementById('city');
       const countryField = document.getElementById('country');
+      const dateStartField = document.getElementById('date_start');
+      const dateEndField = document.getElementById('date_end');
+      
+      // Check if the end date is before the start date, and swap if needed
+      if (dateStartField && dateEndField && dateStartField.value && dateEndField.value) {
+        const startDate = new Date(dateStartField.value);
+        const endDate = new Date(dateEndField.value);
+        
+        if (startDate > endDate) {
+          // Swap dates
+          const tempDate = dateStartField.value;
+          dateStartField.value = dateEndField.value;
+          dateEndField.value = tempDate;
+          console.log("Dates were reordered to ensure start date is before end date");
+        }
+      }
       
       if (cityField && cityField.value && countryField && countryField.value) {
         event.preventDefault(); // Prevent default form submission
@@ -285,61 +301,78 @@
         if (typeof google !== 'undefined' && google.maps) {
           const geocoder = new google.maps.Geocoder();
           
-          geocoder.geocode({ address: `${cityField.value}, ${countryField.value}` }, function(results, status) {
+          geocoder.geocode({ 
+            address: `${cityField.value}, ${countryField.value}`,
+            language: 'en'  // Request English results
+          }, function(results, status) {
             if (status === "OK" && results[0]) {
-              // Get the corrected address components
-              const addressComponents = results[0].geometry.location;
+              // Get the precise coordinates for accurate pin placement
               const location = results[0].geometry.location;
+              
+              // Get the corrected address components from the geocoding result
+              const addressComponents = results[0].address_components;
               let correctedCity = cityField.value; // Default to original if not found
               let correctedCountry = countryField.value; // Default to original if not found
               
-              // Extract correctly spelled city and country from geocoding result
-              for (const component of results[0].address_components) {
+              // Extract the correctly spelled city and country from the geocoding result
+              for (const component of addressComponents) {
+                const englishName = component.long_name;
+                
                 if (component.types.includes('locality')) {
-                  correctedCity = component.long_name;
+                  correctedCity = englishName;
                 } else if (component.types.includes('administrative_area_level_1')) {
                   // In some cases, the state/province might be more appropriate than locality
                   if (!correctedCity || correctedCity === cityField.value) {
-                    correctedCity = component.long_name;
+                    correctedCity = englishName;
                   }
                 } else if (component.types.includes('country')) {
-                  correctedCountry = component.long_name;
+                  correctedCountry = englishName;
                 }
               }
               
-              // Check if there were corrections
-              const cityChanged = correctedCity !== cityField.value;
-              const countryChanged = correctedCountry !== countryField.value;
+              // Use original input if the corrected values don't look like English
+              function looksLikeEnglish(text) {
+                // Basic check for Latin characters, numbers, and common punctuation
+                return /^[A-Za-z0-9\s.,'-]+$/.test(text);
+              }
               
-              if (cityChanged || countryChanged) {
-                // Update form fields with corrected values
-                cityField.value = correctedCity;
-                countryField.value = correctedCountry;
-                
-                // Create hidden fields for coordinates
-                let latInput = document.getElementById('latitude');
-                let lngInput = document.getElementById('longitude');
-                
-                if (!latInput) {
-                  latInput = document.createElement('input');
-                  latInput.type = 'hidden';
-                  latInput.name = 'latitude';
-                  latInput.id = 'latitude';
-                  tripForm.appendChild(latInput);
-                }
-                
-                if (!lngInput) {
-                  lngInput = document.createElement('input');
-                  lngInput.type = 'hidden';
-                  lngInput.name = 'longitude';
-                  lngInput.id = 'longitude';
-                  tripForm.appendChild(lngInput);
-                }
-                
-                latInput.value = location.lat();
-                lngInput.value = location.lng();
-                
-                // Show notification about corrections
+              if (!looksLikeEnglish(correctedCity)) {
+                correctedCity = cityField.value;
+              }
+              
+              if (!looksLikeEnglish(correctedCountry)) {
+                correctedCountry = countryField.value;
+              }
+              
+              // Update form fields with corrected values
+              cityField.value = correctedCity;
+              countryField.value = correctedCountry;
+              
+              // Add coordinates as hidden fields
+              let latInput = document.getElementById('latitude');
+              let lngInput = document.getElementById('longitude');
+              
+              if (!latInput) {
+                latInput = document.createElement('input');
+                latInput.type = 'hidden';
+                latInput.name = 'latitude';
+                latInput.id = 'latitude';
+                tripForm.appendChild(latInput);
+              }
+              
+              if (!lngInput) {
+                lngInput = document.createElement('input');
+                lngInput.type = 'hidden';
+                lngInput.name = 'longitude';
+                lngInput.id = 'longitude';
+                tripForm.appendChild(lngInput);
+              }
+              
+              latInput.value = location.lat();
+              lngInput.value = location.lng();
+              
+              // Show notification about corrections if names were changed
+              if (correctedCity !== cityField.value || correctedCountry !== countryField.value) {
                 const alertDiv = document.createElement('div');
                 alertDiv.className = 'alert alert-info alert-dismissible fade show';
                 alertDiv.role = 'alert';
@@ -350,38 +383,51 @@
                 
                 // Insert alert before the form
                 tripForm.parentNode.insertBefore(alertDiv, tripForm);
-                
-                // Auto-submit the form after a brief delay
-                setTimeout(() => {
-                  tripForm.submit();
-                }, 1500);
-              } else {
-                // No corrections needed, just add coordinates and submit
-                let latInput = document.getElementById('latitude');
-                let lngInput = document.getElementById('longitude');
-                
-                if (!latInput) {
-                  latInput = document.createElement('input');
-                  latInput.type = 'hidden';
-                  latInput.name = 'latitude';
-                  latInput.id = 'latitude';
-                  tripForm.appendChild(latInput);
-                }
-                
-                if (!lngInput) {
-                  lngInput = document.createElement('input');
-                  lngInput.type = 'hidden';
-                  lngInput.name = 'longitude';
-                  lngInput.id = 'longitude';
-                  tripForm.appendChild(lngInput);
-                }
-                
-                latInput.value = location.lat();
-                lngInput.value = location.lng();
-                
-                // Submit form
-                tripForm.submit();
               }
+              
+              // Create a new destination in the database first
+              const destinationData = {
+                city: correctedCity,
+                country: correctedCountry,
+                latitude: location.lat(),
+                longitude: location.lng()
+              };
+              
+              fetch('/api/destinations', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(destinationData)
+              })
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error('Failed to create destination');
+                }
+                return response.json();
+              })
+              .then(savedDestination => {
+                console.log("Destination created:", savedDestination);
+                
+                // Now submit the trip form with the destination ID
+                let destIdInput = document.getElementById('destinationId');
+                if (!destIdInput) {
+                  destIdInput = document.createElement('input');
+                  destIdInput.type = 'hidden';
+                  destIdInput.name = 'destinationId';
+                  destIdInput.id = 'destinationId';
+                  tripForm.appendChild(destIdInput);
+                }
+                destIdInput.value = savedDestination.id;
+                
+                // Submit the form with corrected values and coordinates
+                tripForm.submit();
+              })
+              .catch(error => {
+                console.error("Error creating destination:", error);
+                // Submit the form anyway even if destination creation failed
+                tripForm.submit();
+              });
             } else {
               // Geocoding failed, submit with original values
               console.warn(`Geocoding failed with status: ${status}`);
