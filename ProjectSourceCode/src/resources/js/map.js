@@ -82,11 +82,20 @@ function addDestination(event) {
   console.log(`Geocoding ${cityName}, ${countryName}...`);
   
   // Use the Places API to geocode the location
+  // Use the Places API to geocode the location with language preference set to English
   const geocoder = new google.maps.Geocoder();
-  geocoder.geocode({ address: `${cityName}, ${countryName}` }, (results, status) => {
+  geocoder.geocode({ 
+    address: `${cityName}, ${countryName}`,
+    language: 'en',  // Request English results
+    region: 'US'     // Use US as region preference for more consistent English names
+  }, (results, status) => {
     if (status === "OK" && results[0]) {
       const location = results[0].geometry.location;
       console.log(`Location found: ${location.lat()}, ${location.lng()}`);
+      
+      // Get the formatted address (usually in English when language is set to 'en')
+      const formattedAddress = results[0].formatted_address;
+      console.log(`Formatted address: ${formattedAddress}`);
       
       // Get the corrected address components from the geocoding result
       const addressComponents = results[0].address_components;
@@ -95,16 +104,31 @@ function addDestination(event) {
       
       // Extract the correctly spelled city and country from the geocoding result
       for (const component of addressComponents) {
+        // Try to get the English name when available
+        const englishName = component.long_name || component.short_name;
+        
         if (component.types.includes('locality')) {
-          correctedCity = component.long_name;
+          correctedCity = englishName;
         } else if (component.types.includes('administrative_area_level_1')) {
           // In some cases, the state/province might be more appropriate than locality
           if (!correctedCity || correctedCity === cityName) {
-            correctedCity = component.long_name;
+            correctedCity = englishName;
           }
         } else if (component.types.includes('country')) {
-          correctedCountry = component.long_name;
+          correctedCountry = englishName;
         }
+      }
+      function looksLikeEnglish(text) {
+        // Basic check if text contains only Latin characters, numbers, and common punctuation
+        return /^[A-Za-z0-9\s.,'-]+$/.test(text);
+      }
+      
+      if (!looksLikeEnglish(correctedCity)) {
+        correctedCity = cityName;
+      }
+      
+      if (!looksLikeEnglish(correctedCountry)) {
+        correctedCountry = countryName;
       }
       
       console.log(`Corrected address: ${correctedCity}, ${correctedCountry}`);
