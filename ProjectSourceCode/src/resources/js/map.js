@@ -4,6 +4,15 @@ let markers = [];
 const destinations = [];
 const trips = [];
 
+function formatDateOnly(dateString) {
+  if (!dateString) return '';
+  
+  // For ISO strings or date objects containing time information
+  const date = new Date(dateString);
+  
+  // Extract just the YYYY-MM-DD part
+  return date.toISOString().split('T')[0];
+}
 // Initialize the map
 function initMap() {
   console.log("Initializing map...");
@@ -167,8 +176,8 @@ function addTrip(event) {
   
   const tripName = document.getElementById("tripName").value;
   const destinationId = document.getElementById("tripDestination").value;
-  const startDate = document.getElementById("tripStartDate").value;
-  const endDate = document.getElementById("tripEndDate").value;
+  let startDate = document.getElementById("tripStartDate").value;
+  let endDate = document.getElementById("tripEndDate").value;
   
   if (!destinationId || !startDate || !endDate) {
     alert("Please fill in all required fields");
@@ -181,6 +190,20 @@ function addTrip(event) {
   if (!destination) {
     alert("Please select a valid destination");
     return;
+  }
+  
+  // Compare dates and swap if start date is later than end date
+  const startDateObj = new Date(startDate);
+  const endDateObj = new Date(endDate);
+  
+  if (startDateObj > endDateObj) {
+    // Swap dates
+    const tempDate = startDate;
+    startDate = endDate;
+    endDate = tempDate;
+    
+    // Optionally show a notification to the user that dates were reordered
+    console.log("Dates were reordered to ensure start date is before end date");
   }
   
   // Create trip data object
@@ -323,9 +346,13 @@ function getInfoWindowContent(destination) {
   } else {
     content += '<ul class="mb-0" style="color: black;">';
     destinationTrips.forEach(trip => {
+      // Format dates to exclude time
+      const displayStartDate = formatDateOnly(trip.startDate);
+      const displayEndDate = formatDateOnly(trip.endDate);
+      
       content += `
         <li style="color: black;">
-          <strong>${trip.tripName || 'Unnamed Trip'}</strong>: ${trip.startDate} to ${trip.endDate}
+          <strong>${trip.tripName || 'Unnamed Trip'}</strong>: ${displayStartDate} to ${displayEndDate}
         </li>`;
     });
     content += '</ul>';
@@ -335,6 +362,7 @@ function getInfoWindowContent(destination) {
   
   return content;
 }
+
 
 // Update all marker info windows
 function updateAllMarkerInfoWindows() {
@@ -395,6 +423,10 @@ function addDestinationToList(destination) {
 function addTripToList(trip) {
   const tripsList = document.getElementById("tripsList");
   
+  // Format dates to exclude time
+  const displayStartDate = formatDateOnly(trip.startDate);
+  const displayEndDate = formatDateOnly(trip.endDate);
+  
   const item = document.createElement("a");
   item.href = "#";
   item.className = "list-group-item list-group-item-action";
@@ -405,7 +437,7 @@ function addTripToList(trip) {
       <button class="btn btn-sm btn-danger remove-btn">✕</button>
     </div>
     <p class="mb-1">${trip.destination}</p>
-    <p class="mb-1">${trip.startDate} to ${trip.endDate}</p>
+    <p class="mb-1">${displayStartDate} to ${displayEndDate}</p>
   `;
   
   // Add click handler to focus on this destination
@@ -630,12 +662,16 @@ function loadData() {
       // Process trips
       if (serverTrips && serverTrips.length > 0) {
         serverTrips.forEach(trip => {
+          // Format dates to exclude time
+          const startDate = formatDateOnly(trip.startDate || trip.date_start);
+          const endDate = formatDateOnly(trip.endDate || trip.date_end);
+          
           const formattedTrip = {
             id: trip.id || trip.trip_id,
             destinationId: trip.destinationId,
             destination: trip.destination || `${trip.city}, ${trip.country}`,
-            startDate: trip.startDate || trip.date_start,
-            endDate: trip.endDate || trip.date_end,
+            startDate: startDate,
+            endDate: endDate,
             tripName: trip.tripName || trip.trip_name || `Trip to ${trip.city || 'Unknown'}`
           };
           
