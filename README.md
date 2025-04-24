@@ -32,4 +32,4 @@ In addition to planning, the app also serves as a travel journal, where users ca
 ## How to run the tests
 - npm run test
 ## Link to the deployed application
-- /localhost:3000
+- https://travel-planner-3sgn.onrender.com
